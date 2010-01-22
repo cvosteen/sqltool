@@ -13,6 +13,7 @@ public class Database implements Serializable, Comparable<Database> {
 	private String driver;
 	private String connectionUrl;
 	private Map<String, String> queries;
+	private Statement currentStatement = null;
 	transient private Connection connection = null;
 
 	public Database(String name, String driver, String connectionUrl) {
@@ -124,24 +125,57 @@ public class Database implements Serializable, Comparable<Database> {
 		return list;
 	}
 
-	public Object executeQuery(String name) throws Exception {
+	public Object executeQuery(String name) throws SQLException {
 		return executeAdHocSql(queries.get(name));
 	}
 
-	public Object executeAdHocSql(String sql) throws Exception {
-		QueryThread qt = executeThreadedSql(sql);
-		qt.start();
-		try {
-			qt.join();
-		} catch(InterruptedException e) {}
-		Exception e = qt.getError();
-		if(e != null)
-			throw e;
-		return qt.getResult();
+	public Object executeAdHocSql(String sql) throws SQLException {
+		// Returns a ResultSet for a SELECT query
+		// and an Integer (row count) for other queries.
+		currentStatement = connection.createStatement();
+
+		// Try to return the first result set, if any,
+		// otherwise return the last update count
+		// We determine this as follows:
+		// The result of Statement.execute is a boolean, True for a Result Set, False for not.
+		// If no result set, check Statement.getUpdateCount:  -1 means no more results, any other number
+		// is the update count.
+		// Keep calling Statement.getMoreResults, which also returns a boolean like StatementExecute
+		boolean isResultSet = currentStatement.execute(sql);
+		int lastUpdateCount = -1;
+		int updateCount = -1;
+
+		if(isResultSet) {
+			return currentStatement.getResultSet();
+		} else {
+			updateCount = currentStatement.getUpdateCount();
+		}
+
+		//  isResultSet && updateCount != -1 ==> ??? Error ???
+		//  isResultSet && updateCount == -1 ==> Result Set
+		// !isResultSet && updateCount != -1 ==> Update Count
+		// !isResultSet && updateCount == -1 ==> No more results
+
+		while(isResultSet || updateCount != -1) {
+			isResultSet = currentStatement.getMoreResults();
+			lastUpdateCount = updateCount;
+			updateCount = currentStatement.getUpdateCount();
+
+			if(isResultSet && updateCount == -1) {
+				// We have a result set
+				return currentStatement.getResultSet();
+			}
+		}
+		
+		return lastUpdateCount;
 	}
 			
 	public QueryThread executeThreadedSql(String sql) {
 		return new QueryThread(connection, sql);
+	}
+
+	public void cancelQuery() throws SQLException {
+		currentStatement.cancel();
 	}
 
 	public void commit() throws SQLException {
