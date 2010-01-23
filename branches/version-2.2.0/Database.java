@@ -85,6 +85,9 @@ public class Database implements Serializable, Comparable<Database> {
 				throw(f);
 			}
 			connection = DriverManager.getConnection(connectionUrl);
+
+			// TODO: Make this user configurable?
+			connection.setAutoCommit(false);
 		}
 	}
 

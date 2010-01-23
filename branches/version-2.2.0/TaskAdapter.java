@@ -1,8 +1,8 @@
 public class TaskAdapter implements TaskListener {
 
-	public void finished() { }
-	public void status(Object obj) { }
-	public void result(Object obj) { }
-	public void error(Exception e) { }
+	public void taskFinished() { }
+	public void taskStatus(Object obj) { }
+	public void taskResult(Object obj) { }
+	public void taskError(Exception e) { }
 
 }

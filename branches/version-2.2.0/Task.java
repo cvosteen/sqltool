@@ -27,28 +27,28 @@ public abstract class Task extends Thread {
 	// Note: Don't modify objects that have been passed to these
 	// four methods below!!! Pass a copy if you are going to modify
 	// the object.
-	protected synchronized void finished() {
+	protected synchronized void reportFinished() {
 		finished = true;
 		for(TaskListener listener : listeners)
-			listener.finished();
+			listener.taskFinished();
 	}
 
-	protected synchronized void status(Object obj) {
+	protected synchronized void reportStatus(Object obj) {
 		status = obj;
 		for(TaskListener listener : listeners)
-			listener.status(obj);
+			listener.taskStatus(obj);
 	}
 
-	protected synchronized void result(Object obj) {
+	protected synchronized void reportResult(Object obj) {
 		result = obj;
 		for(TaskListener listener : listeners)
-			listener.result(obj);
+			listener.taskResult(obj);
 	}
 
-	protected synchronized void error(Exception e) {
+	protected synchronized void reportError(Exception e) {
 		error = e;
 		for(TaskListener listener : listeners)
-			listener.error(e);
+			listener.taskError(e);
 	}
 
 	// Public methods to inquire on the state of the Task
