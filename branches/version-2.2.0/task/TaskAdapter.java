@@ -3,6 +3,8 @@
  * to create TaskListeners.
  */
 
+package task;
+
 public class TaskAdapter implements TaskListener {
 
 	public void taskFinished() { }

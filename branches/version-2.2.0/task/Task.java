@@ -5,7 +5,9 @@
  * Tasks can also be cancelled.
  */
 
-import java.util.*;
+package task;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Task extends Thread {
 
@@ -14,20 +16,30 @@ public abstract class Task extends Thread {
 	private Object result = null;
 	private Exception error = null;
 	private boolean cancelled = false;
-	private List<TaskListener> listeners = new Vector<TaskListener>();
+	private List<TaskListener> listeners = new ArrayList<TaskListener>();
 
 	/**
 	 * Adds an observer to this instance.
+	 * A shallow copy of the original list is made just in case this method is
+	 * called while iterating through the list.  This could happen if called by
+	 * a TaskListener.
 	 */
 	public synchronized void addTaskListener(TaskListener listener) {
-		listeners.add(listener);
+		ArrayList<TaskListener> newListeners = new ArrayList<TaskListener>(listeners);
+		newListeners.add(listener);
+		listeners = newListeners;
 	}
 
 	/**
 	 * Removes an observer from this instance.
+	 * A shallow copy of the original list is made just in case this method is
+	 * called while iterating through the list.  This could happen if called by
+	 * a TaskListener.
 	 */
 	public synchronized void removeTaskListener(TaskListener listener) {
-		listeners.remove(listener);
+		ArrayList<TaskListener> newListeners = new ArrayList<TaskListener>(listeners);
+		newListeners.remove(listener);
+		listeners = newListeners;
 	}
 
 	/**

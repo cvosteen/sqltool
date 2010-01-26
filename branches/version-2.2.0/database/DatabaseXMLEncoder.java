@@ -1,8 +1,4 @@
-/**
- * Changes in v2.1:
- * ================
- * - New class - saves databases to disk as XML
- */
+package database;
 
 import java.io.*;
 import java.util.*;

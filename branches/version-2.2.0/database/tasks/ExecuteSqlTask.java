@@ -14,8 +14,8 @@
  * grabbing the next ResultSet will immediately close the current
  * one.
  */
-import java.io.*;
-import java.util.*;
+package database.tasks;
+import task.*;
 import java.sql.*;
 
 public class ExecuteSqlTask extends Task {
@@ -26,7 +26,7 @@ public class ExecuteSqlTask extends Task {
 		this.preparedStatement = preparedStatement;
 	}
 
-	public ExecuteSqlTask(Connection connection, String sql) {
+	public ExecuteSqlTask(Connection connection, String sql) throws SQLException {
 		this.preparedStatement = connection.prepareStatement(sql);
 	}
 	

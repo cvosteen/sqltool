@@ -5,6 +5,8 @@
  * Task instance.
  */
 
+package task;
+
 public interface TaskListener {
 
 	/**
