@@ -1,11 +1,3 @@
-/**
- * Changes in v2.1:
- * - put data file string in this class from database manager class
- * - put version name in this class from hard coded in DatabaseManagerFrame
- * - Catch potential errors when reading database file, warn user if needed
- *   and proceed as if there was no file
- */
-
 import java.io.IOException;
 import javax.swing.*;
 
@@ -29,6 +21,8 @@ public class SQLTool {
 			dbman = new DatabaseManager(DATA_FILE);
 		} catch(IOException e) {
 			// On failure, we'll make a new DatabaseManager
+			// TODO: Make a more user friendly error message
+			// or preferably NO error message if there is no xml file
 			JOptionPane.showMessageDialog(null,
 				e.getMessage(), "Warning",
 				JOptionPane.WARNING_MESSAGE);
