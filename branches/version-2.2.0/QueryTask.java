@@ -4,14 +4,16 @@ import java.sql.*;
 
 public class QueryTask extends Task implements TaskListener {
 
-	private Database database = null;
-	private String sql = null;
+	private PreparedStatement preparedStatement;
 
-	public QueryTask(Database database, String sql) {
-		this.database = database;
-		this.sql = sql;
+	public QueryTask(PreparedStatement preparedStatement) {
+		this.preparedStatement = preparedStatement;
 	}
-	
+
+	public QueryTask(Connection connection, String sql) {
+		this.preparedStatement = connection.prepareStatement(sql);
+	}
+
 	public void run() {
 		try {
 			ExecuteSqlTask t = new ExecuteSqlTask(database, sql);
