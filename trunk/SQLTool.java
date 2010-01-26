@@ -13,7 +13,7 @@ public class SQLTool {
 
 	public static final String DATA_FILE = "database.xml";
 	public static final String APP_NAME = "SQLTool";
-	public static final String APP_VERSION = "2.1";
+	public static final String APP_VERSION = "2.2";
 
 	public static void main(String[] args) {
 		// Use native L&F if possible
