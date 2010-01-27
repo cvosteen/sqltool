@@ -1,3 +1,4 @@
+package gui.components;
 import java.awt.*;
 import java.awt.print.*;
 import java.util.*;
