@@ -15,10 +15,9 @@ import javax.swing.tree.*;
 
 public class DatabasePanel extends JSplitPane {
 
-	protected DatabaseManagerFrame databaseManagerFrame;
-	private DatabaseManager databaseManager;
-	private Set<Database> databases;
 	private Database database;
+	private Connection connection;
+	private RestrictedDatabaseManager restrictedDatabaseManager = null;
 	private JTree tree;
 	private JComboBox queryCombo;
 	private JTextArea sqlField;
@@ -28,18 +27,23 @@ public class DatabasePanel extends JSplitPane {
 	protected JButton saveButton;
 	protected JLabel queryStatusLabel;
 
-	public DatabasePanel(DatabaseManagerFrame dmf, Set<Database> databases, Database theDatabase) throws SQLException, ClassNotFoundException {
+	public DatabasePanel(Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
-
-		databaseManagerFrame = dmf;
-		this.databases = databases;
 
 		if(theDatabase == null)
 			throw new NullPointerException("Cannot open database, none specified!");
-		database = theDatabase;
+		this.database = database;
 		
-		database.connect();
+		connection = database.connect();
 
+		createComponents();
+	}
+	
+	public void setRestrictedDatabaseManager(RestrictedDatabaseManager restrictedDatabaseManager) {
+		this.restrictedDatabaseManager = restrictedDatabaseManager;
+	}
+
+	private void createComponents() {
 		// Put the tree on the left side of the divider.
 		DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Root");
 		DefaultMutableTreeNode dbNode = new DefaultMutableTreeNode(database.getName());
@@ -59,15 +63,17 @@ public class DatabasePanel extends JSplitPane {
 			});
 		JScrollPane treeScroll = new JScrollPane(tree);
 		setLeftComponent(treeScroll);
-		setDividerLocation(0.3);
-		setResizeWeight(0.3);
+		setDividerLocation(0.25);
+		setResizeWeight(0.25);
 
+		// Split right side into top and bottom panels
 		JPanel topPanel = new JPanel();
 		JPanel bottomPanel = new JPanel();
 		JSplitPane panel = new JSplitPane(VERTICAL_SPLIT);
 		panel.setTopComponent(topPanel);
 		panel.setBottomComponent(bottomPanel);
 
+		// Layout the top panel
 		GridBagLayout gridbag = new GridBagLayout();
 		GridBagConstraints c = new GridBagConstraints();
 		topPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
@@ -75,6 +81,7 @@ public class DatabasePanel extends JSplitPane {
 		c.fill = GridBagConstraints.BOTH;
 		c.insets = new Insets(5,5,5,5);
 
+		// Query ComboBox
 		c.weighty = 0.0;
 		c.gridheight = 1;
 		JLabel label = new JLabel("Query:");
@@ -95,6 +102,7 @@ public class DatabasePanel extends JSplitPane {
 		gridbag.setConstraints(queryCombo, c);
 		topPanel.add(queryCombo);
 
+		// New query button
 		c.weightx = 0.0;
 		JButton newButton = new JButton("New");
 		newButton.addActionListener(new ActionListener() {
@@ -105,6 +113,7 @@ public class DatabasePanel extends JSplitPane {
 		gridbag.setConstraints(newButton, c);
 		topPanel.add(newButton);
 		
+		// Delete query button
 		c.weightx = 0.1;
 		c.gridwidth = 1;
 		c.fill = GridBagConstraints.NONE;
@@ -118,6 +127,7 @@ public class DatabasePanel extends JSplitPane {
 		gridbag.setConstraints(deleteButton, c);
 		topPanel.add(deleteButton);
 
+		// Run query button
 		c.gridx = 6;
 		c.weightx = 0.0;
 		c.gridwidth = GridBagConstraints.REMAINDER;
@@ -131,6 +141,7 @@ public class DatabasePanel extends JSplitPane {
 		gridbag.setConstraints(runButton, c);
 		topPanel.add(runButton);
 
+		// SQL Editor
 		c.gridy = 1;
 		c.gridx = 0;
 		c.gridwidth = 1;
@@ -167,6 +178,7 @@ public class DatabasePanel extends JSplitPane {
 		gridbag.setConstraints(sqlScroll, c);
 		topPanel.add(sqlScroll);
 
+		// Save query button
 		c.weightx = 0.0;
 		c.gridwidth = GridBagConstraints.REMAINDER;
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -181,6 +193,7 @@ public class DatabasePanel extends JSplitPane {
 		gridbag.setConstraints(saveButton, c);
 		topPanel.add(saveButton);
 
+		// Status label
 		c.gridx = 5;
 		c.gridy = 2;
 		c.anchor = GridBagConstraints.SOUTHWEST;
@@ -189,6 +202,7 @@ public class DatabasePanel extends JSplitPane {
 		topPanel.add(queryStatusLabel);
 
 
+		// Lay out the bottom panel
 		gridbag = new GridBagLayout();
 		c = new GridBagConstraints();
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
@@ -198,6 +212,7 @@ public class DatabasePanel extends JSplitPane {
 		c.fill = GridBagConstraints.BOTH;
 		c.insets = new Insets(0,0,0,0);
 
+		// Results table
 		table = new JTable();
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		popup = new JPopupMenu();
@@ -399,7 +414,7 @@ public class DatabasePanel extends JSplitPane {
 	public void expandDatabaseTree(DefaultMutableTreeNode dbNode) {
 		try {
 			dbNode.removeAllChildren();
-			java.util.List<String> tables = database.getTables();
+			java.util.List<String> tables = database.getTables(connection);
 			for(String table : tables) {
 				DefaultMutableTreeNode tableNode = new DefaultMutableTreeNode(table);
 				tableNode.add(new DefaultMutableTreeNode("Placeholder"));
@@ -415,7 +430,7 @@ public class DatabasePanel extends JSplitPane {
 	public void expandTableTree(DefaultMutableTreeNode tableNode) {
 		try {
 			tableNode.removeAllChildren();
-			java.util.List<String> columns = database.getColumns((String)tableNode.getUserObject());
+			java.util.List<String> columns = database.getColumns(connection, (String)tableNode.getUserObject());
 			for(String column : columns) {
 				DefaultMutableTreeNode columnNode = new DefaultMutableTreeNode(column);
 				tableNode.add(columnNode);

@@ -15,17 +15,19 @@ public class DatabaseManagerFrame extends JFrame {
 	private JTabbedPane tabbedPane;
 	private PageFormat pageFormat = new PageFormat();
 
-	public DatabaseManagerFrame() {
-		super(SQLTool.APP_NAME + " v" + SQLTool.APP_VERSION);
+	public DatabaseManagerFrame(DatabaseManager databaseManager, String name, String version) {
+		super(name + " v" + version);
 
-		databaseManager = DatabaseManager.instanceForFile(SQLTool.DATA_FILE);
+		this.databaseManager = databaseManager;
+		createComponents();
+	}
 		
-		setMinimumSize(new Dimension(600,400));
+	public void createComponents() {
+		setMinimumSize(new Dimension(620,460));
 
 		// Don't do anything when we click on the 'X'
 		// We want to be able to save settings before closing!!!!
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
 
 		// Add a window close listener to save our settings before quitting
 		addWindowListener(new WindowAdapter() {
@@ -119,22 +121,31 @@ public class DatabaseManagerFrame extends JFrame {
 		setVisible(true);
 	}
 
-	public PageFormat getPageFormat() {
-		return pageFormat;
-	}
-
+	/**
+	 * Asks the current DatabasePanel to print its table using the
+	 * current PageFormat
+	 */
 	private void printTable() {
 		int index = tabbedPane.getSelectedIndex();
 		if(index != -1)	{
-			((DatabasePanel) tabbedPane.getComponentAt(index)).printTable();
+			((DatabasePanel) tabbedPane.getComponentAt(index)).printTable(pageFormat);
 		}
 	}
 
+	/**
+	 * Allow the user to modify the current PageFormat.
+	 */
 	private void pageSetup() {
 		PrinterJob job = PrinterJob.getPrinterJob();
 		pageFormat = job.pageDialog(pageFormat);
 	}
 
+	/**
+	 * Bring up the DatabaseManagerDialog for the user to connect to
+	 * one of the databases.
+	 * Creates a new DatabasePanel for the selected Database and
+	 * adds it to the Tabbed Pane.
+	 */
 	private void connect() {
 		DatabaseManagerDialog dialog = new DatabaseManagerDialog(this);
 		Database database = dialog.getResponse();
@@ -157,6 +168,9 @@ public class DatabaseManagerFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * Tells the selected DatabasePanel to shutdown().
+	 */
 	private void disconnect() {
 		int index = tabbedPane.getSelectedIndex();
 		if(index != -1)	{
@@ -165,18 +179,28 @@ public class DatabaseManagerFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * Tells the selected DatabasePanel to commit().
+	 */
 	private void commit() {
 		DatabasePanel activePanel = (DatabasePanel) tabbedPane.getSelectedComponent();
 		if(activePanel != null)
 			activePanel.commit();
 	}
 
+	/**
+	 * Tells the selected DatabasePanel to rollback().
+	 */
 	private void rollback() {
 		DatabasePanel activePanel = (DatabasePanel) tabbedPane.getSelectedComponent();
 		if(activePanel != null)
 			activePanel.rollback();
 	}
 
+	/**
+	 * Called when the program is exiting.
+	 * All open DatabasePanels will be asked to shutdown.
+	 */
 	private void shutdown() {
 		for(int i = 0; i < tabbedPane.getTabCount(); i++)
 			((DatabasePanel) tabbedPane.getComponentAt(i)).shutdown();
