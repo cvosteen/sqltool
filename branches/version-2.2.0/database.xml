@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<databases>
-<database name="Test">
-<driver>sun.jdbc.odbc.JdbcOdbcDriver</driver>
-<url>jdbc:odbc:Driver={Microsoft dBase VFP Driver (*.dbf)};DBQ=C:\Users\Christian\Programs\Python\dbf2;</url>
-</database>
-</databases>
