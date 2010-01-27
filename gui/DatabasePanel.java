@@ -1,16 +1,7 @@
-/**
- * Changes in v2.1:
- * - Fixed delete button getting 'squished' when window is small
- * - Save button dimmed when there are no changes
- * - Uses PageFormat object from the DatabaseManagerFrame and doesn't
- *   show the page format dialog for each print
- * - Support for asynchronous queries
- * - Status indicator added "xxx Records" while query is running
- * - Errors that may occur while this panel is shutting down will be
- *   silenced
- * - Data is saved to disk when changes are made, not when program is closed
- * - Removed empty border around results table
- */
+package gui;
+
+import database.*;
+import gui.components.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -26,6 +17,7 @@ public class DatabasePanel extends JSplitPane {
 
 	protected DatabaseManagerFrame databaseManagerFrame;
 	private DatabaseManager databaseManager;
+	private Set<Database> databases;
 	private Database database;
 	private JTree tree;
 	private JComboBox queryCombo;
@@ -36,11 +28,11 @@ public class DatabasePanel extends JSplitPane {
 	protected JButton saveButton;
 	protected JLabel queryStatusLabel;
 
-	public DatabasePanel(DatabaseManagerFrame dmf, DatabaseManager dm, Database theDatabase) throws SQLException, ClassNotFoundException {
+	public DatabasePanel(DatabaseManagerFrame dmf, Set<Database> databases, Database theDatabase) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
 
 		databaseManagerFrame = dmf;
-		databaseManager = dm;
+		this.databases = databases;
 
 		if(theDatabase == null)
 			throw new NullPointerException("Cannot open database, none specified!");
