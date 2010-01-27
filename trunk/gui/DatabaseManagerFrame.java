@@ -1,14 +1,12 @@
+package gui;
 
-/** * Changes in v2.1:
- * - Added Printer menu
- * - Keeps PageFormat object to be used for all prints
- * - No more save on close, a save is made when changes are made
- */
+import database.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
 import java.io.*;
 import java.sql.*;
+import java.util.*;
 import javax.swing.*;
 
 public class DatabaseManagerFrame extends JFrame {
@@ -17,12 +15,10 @@ public class DatabaseManagerFrame extends JFrame {
 	private JTabbedPane tabbedPane;
 	private PageFormat pageFormat = new PageFormat();
 
-	public DatabaseManagerFrame(DatabaseManager theDatabaseManager, final String name, final String version) {
-		super(name + " v" + version);
+	public DatabaseManagerFrame() {
+		super(SQLTool.APP_NAME + " v" + SQLTool.APP_VERSION);
 
-		if(theDatabaseManager == null)
-			throw new NullPointerException("I need a DatabaseManager, duh!");
-		databaseManager = theDatabaseManager;
+		databaseManager = DatabaseManager.instanceForFile(SQLTool.DATA_FILE);
 		
 		setMinimumSize(new Dimension(600,400));
 
@@ -100,7 +96,7 @@ public class DatabaseManagerFrame extends JFrame {
 		JMenuItem aboutItem = new JMenuItem("About");
 		aboutItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					new AboutDialog(null, name, version);
+					new AboutDialog(null);
 				}
 			});
 		helpMenu.add(aboutItem);
@@ -140,12 +136,12 @@ public class DatabaseManagerFrame extends JFrame {
 	}
 
 	private void connect() {
-		DatabaseManagerDialog dialog = new DatabaseManagerDialog(this, databaseManager);
-		Database chosenDb = dialog.getResponse();
-		if(chosenDb != null) {
+		DatabaseManagerDialog dialog = new DatabaseManagerDialog(this);
+		Database database = dialog.getResponse();
+		if(database != null) {
 			try {
-				JComponent newPanel = new DatabasePanel(this, databaseManager, chosenDb);
-				tabbedPane.addTab(chosenDb.getName(), newPanel);
+				JComponent newPanel = new DatabasePanel(this, database);
+				tabbedPane.addTab(database.getName(), newPanel);
 				tabbedPane.setSelectedComponent(newPanel);
 			} catch(SQLException f) {
 				f.printStackTrace();

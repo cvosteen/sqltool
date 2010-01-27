@@ -1,3 +1,10 @@
+/**
+ * The Database object serves as a glorified struct.
+ * It merely holds database connection information, like
+ * the connection url and the Driver.  It also holds
+ * a collection of queries that are to be used with
+ * the database.
+ */
 package database;
 
 import java.io.*;
@@ -79,18 +86,18 @@ public class Database implements Serializable, Comparable<Database> {
 	 * url.
 	 */
 	public Connection connect() throws SQLException, ClassNotFoundException {
-		if(connection == null) {
-			try {
-				Class.forName(driver);
-			} catch(ClassNotFoundException e) {
-				ClassNotFoundException f = new ClassNotFoundException("Invalid database driver class.", e);
-				throw(f);
-			}
-			connection = DriverManager.getConnection(connectionUrl);
-
-			// TODO: Make this user configurable?
-			connection.setAutoCommit(false);
+		try {
+			Class.forName(driver);
+		} catch(ClassNotFoundException e) {
+			ClassNotFoundException f = new ClassNotFoundException("Invalid database driver class.", e);
+			throw(f);
 		}
+		connection = DriverManager.getConnection(connectionUrl);
+
+		// TODO: Make this user configurable?
+		connection.setAutoCommit(false);
+
+		return connection;
 	}
 
 	/**
@@ -135,7 +142,7 @@ public class Database implements Serializable, Comparable<Database> {
 
 
 	/**
-	 * Allows comparison between instances and use in collections.
+	 * Allows comparison between instances for use in collections.
 	 */
 	public boolean equals(Object obj) {
 		if(!(obj instanceof Database))
@@ -146,7 +153,7 @@ public class Database implements Serializable, Comparable<Database> {
 	}
 
 	/**
-	 * Allows comparison between instances and use in collections.
+	 * Allows comparison between instances for use in collections.
 	 */
 	public int hashCode() {
 		return name.hashCode();

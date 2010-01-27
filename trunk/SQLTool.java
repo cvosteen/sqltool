@@ -1,5 +1,8 @@
-import java.io.IOException;
+import database.*;
+import gui.*;
+import java.io.*;
 import javax.swing.*;
+import java.util.*;
 
 public class SQLTool {
 
@@ -15,27 +18,25 @@ public class SQLTool {
 		JFrame.setDefaultLookAndFeelDecorated(true);
 
 		// Create the application
-		DatabaseManager dbman = null;
+		DatabaseManager databaseManager = DatabaseManager.instanceForFile(DATA_FILE);
+
 		try {
 			// If the file is formatted incorrectly, or nonexistent this may fail
-			dbman = new DatabaseManager(DATA_FILE);
+			databaseManager.load();
+
+		} catch(FileNotFoundException e) {
+			// If there is no file, it is likely this is the first time the program
+			// is being run.  In this case, ignore the error.
+
 		} catch(IOException e) {
-			// On failure, we'll make a new DatabaseManager
-			// TODO: Make a more user friendly error message
-			// or preferably NO error message if there is no xml file
+			// Some unknown kind of error occurred.  Alert the user, then
+			// proceed with an empty Database List
+			// TODO: Allow the user to cancel out?
 			JOptionPane.showMessageDialog(null,
 				e.getMessage(), "Warning",
 				JOptionPane.WARNING_MESSAGE);
-			try {
-				dbman = new DatabaseManager(DATA_FILE, true);
-			} catch(IOException f) {
-				// This shouldn't happen, the above method is a failsafe
-				JOptionPane.showMessageDialog(null,
-					f.getMessage(), "Error",
-					JOptionPane.ERROR_MESSAGE);
-				System.exit(1);
-			}
 		}
-		new DatabaseManagerFrame(dbman, APP_NAME, APP_VERSION);
+
+		new DatabaseManagerFrame();
 	}
 }

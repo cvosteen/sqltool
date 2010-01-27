@@ -1,3 +1,7 @@
+/**
+ * Persists a collection of Databases to, and
+ * retrieves a collection of Databases from an .xml file
+ */
 package database;
 
 import java.io.*;
@@ -8,19 +12,35 @@ import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
 import org.w3c.dom.*;
 
-public class DatabaseXML {
+public class DatabaseXMLEncoder {
 
-	private String filename;
+	private String filename = null;
 
-	public DatabaseXML(String filename) {
+	public DatabaseXMLEncoder() {
+	}
+
+	public DatabaseXMLEncoder(String filename) {
 		this.filename = filename;
 	}
 
-	public List<Database> readXMLFile() throws IOException {
+	public void setFilename(String filename) {
+		this.filename = filename;
+	}
+
+	public String getFilename() {
+		return filename;
+	}
+
+	/**
+	 * Reads this instance's associated filename and recreates a collection
+	 * of Databases.
+	 */
+	public Collection<Database> readXMLFile() throws IOException {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		Document doc;
 		List<Database> databaseList = new ArrayList<Database>();
 
+		// Parse the XML file
 		try {
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			doc = db.parse(filename);
@@ -36,6 +56,7 @@ public class DatabaseXML {
 		// Get all of the children nodes <database> tags
 		NodeList nl = root.getElementsByTagName("database");
 
+		// Read each database
 		for(int i = 0; i < nl.getLength(); i++) {
 			Element e = (Element) nl.item(i);
 			Database d = readDatabase(e);
@@ -48,6 +69,18 @@ public class DatabaseXML {
 	}
 
 
+
+	/**
+	 * Reads a database by analyizing a <database> element.
+	 * The database element should be of the form:
+	 * <database name="Name">
+	 *   <driver>foo.bar.DriverName</driver>
+	 *   <url>foo:bar:connection_string</url>
+	 *   <query name="Query One">SELECT * FROM Foo</query>
+	 *   <query name="Query Two">SELECT * FROM Bar</query>
+	 *   ...
+	 * </database>
+	 */
 	private Database readDatabase(Element elem) {
 		String name = elem.getAttribute("name");
 		String cls = getTextChild(elem, "driver");
@@ -69,6 +102,9 @@ public class DatabaseXML {
 		return d;
 	}
 
+	/**
+	 * Convenience function to retrieve the text from a child element.
+	 */
 	private String getTextChild(Element elem, String name) {
 		NodeList nl = elem.getElementsByTagName(name);
 		if(nl.getLength() == 0)
@@ -77,7 +113,10 @@ public class DatabaseXML {
 		return nl.item(0).getFirstChild().getNodeValue();
 	}
 
-	public void writeXMLFile(List<Database> dl) throws IOException {
+	/**
+	 * Writes a collection of Databases to the associated file.
+	 */
+	public void writeXMLFile(Collection<Database> dl) throws IOException {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		Document doc;
 
@@ -108,6 +147,9 @@ public class DatabaseXML {
 		}
 	}
 
+	/**
+	 * Constructs a <database> element in the XML DOM.
+	 */
 	private void writeDatabase(Element elem, Database db) {
 				Element e = elem.getOwnerDocument().createElement("database");
 				e.setAttribute("name", db.getName());
@@ -122,6 +164,9 @@ public class DatabaseXML {
 				elem.appendChild(e);
 	}
 
+	/**
+	 * Convenience function to set the text of a child element.
+	 */
 	private void setTextChild(Element elem, String name, String value) {
 		Document doc = elem.getOwnerDocument();
 		Element e = doc.createElement(name);

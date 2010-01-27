@@ -1,3 +1,5 @@
+package gui;
+import database.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -13,9 +15,7 @@ public class DatabaseManagerDialog extends JDialog {
 	public DatabaseManagerDialog(Frame owner, DatabaseManager theDatabaseManager) {
 		super(owner, "Databases", true);
 
-		if(theDatabaseManager == null)
-			throw new NullPointerException("I need a DatabaseManager, duh!");
-		this.databaseManager = theDatabaseManager;
+		databaseManager = DatabaseManager.instanceForFile(SQLTool.DATA_FILE);
 		
 		// We want to hide this object when we click on the 'X'
 		// After this dialog has been closed, we will need to retreive the chosen database
@@ -36,7 +36,7 @@ public class DatabaseManagerDialog extends JDialog {
 		c.gridwidth = 1;
 		c.gridheight = 3;
 		list = new JList();
-		list.setListData(databaseManager.getAllDatabases().toArray());
+		list.setListData(databaseManager.toArray());
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setSelectedIndex(0);
 
@@ -136,7 +136,7 @@ public class DatabaseManagerDialog extends JDialog {
 		DatabaseDialog dbDialog = new DatabaseDialog(this);
 		Database newDatabase = dbDialog.getResponse();
 		if(newDatabase != null) {
-			databaseManager.saveDatabase(newDatabase);
+			databaseManager.add(newDatabase);
 			try {
 				databaseManager.save();
 			} catch(IOException e) {
@@ -145,7 +145,7 @@ public class DatabaseManagerDialog extends JDialog {
 					JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		list.setListData(databaseManager.getAllDatabases().toArray());
+		list.setListData(databaseManager.toArray());
 	}
 
 	private void editDatabase() {
@@ -166,7 +166,7 @@ public class DatabaseManagerDialog extends JDialog {
 				}
 			}
 		}
-		list.setListData(databaseManager.getAllDatabases().toArray());
+		list.setListData(databaseManager.toArray());
 	}
 
 	private void deleteDatabase() {
@@ -175,7 +175,7 @@ public class DatabaseManagerDialog extends JDialog {
 				list, "Are you sure you want to delete " + selection.getName() + "?",
 				"Delete Database", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE)
 				== JOptionPane.YES_OPTION) {
-			databaseManager.deleteDatabase((Database) list.getSelectedValue());
+			databaseManager.remove((Database) list.getSelectedValue());
 			try {
 				databaseManager.save();
 			} catch(IOException e) {
@@ -183,7 +183,7 @@ public class DatabaseManagerDialog extends JDialog {
 					e.getMessage(), "Error",
 					JOptionPane.ERROR_MESSAGE);
 			}
-			list.setListData(databaseManager.getAllDatabases().toArray());
+			list.setListData(databaseManager.toArray());
 		}
 	}
 
