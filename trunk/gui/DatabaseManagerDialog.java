@@ -12,11 +12,14 @@ public class DatabaseManagerDialog extends JDialog {
 	private JPopupMenu popup;
 	private Database response = null;
 
-	public DatabaseManagerDialog(Frame owner, DatabaseManager theDatabaseManager) {
+	public DatabaseManagerDialog(Frame owner, DatabaseManager databaseManager) {
 		super(owner, "Databases", true);
 
-		databaseManager = DatabaseManager.instanceForFile(SQLTool.DATA_FILE);
+		this.databaseManager = databaseManager;
+		createComponents();
+	}
 		
+	private void createComponents() {
 		// We want to hide this object when we click on the 'X'
 		// After this dialog has been closed, we will need to retreive the chosen database
 		setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
@@ -119,7 +122,7 @@ public class DatabaseManagerDialog extends JDialog {
 		panel.add(cancelButton);
 
 		getContentPane().add(panel);
-		setMinimumSize(new Dimension(300,200));
+		setMinimumSize(new Dimension(350,250));
 		pack();
 		list.requestFocusInWindow();
 		getRootPane().setDefaultButton(connectButton);
@@ -132,6 +135,11 @@ public class DatabaseManagerDialog extends JDialog {
 		setVisible(true);
 	}
 	
+	/**
+	 * Called when a user requests to create a new database from the
+	 * context menu.
+	 * A DatabaseDialog is created to capture the user's preferences.
+	 */
 	private void newDatabase() {
 		DatabaseDialog dbDialog = new DatabaseDialog(this);
 		Database newDatabase = dbDialog.getResponse();
@@ -148,6 +156,12 @@ public class DatabaseManagerDialog extends JDialog {
 		list.setListData(databaseManager.toArray());
 	}
 
+	/**
+	 * Called when a user requests to edit an existing database from the
+	 * context menu.
+	 * A DatabaseDialog is created with the Database instance so the
+	 * user can edit it.
+	 */
 	private void editDatabase() {
 		Database selection = (Database) list.getSelectedValue();
 		if(selection != null) {
@@ -169,6 +183,11 @@ public class DatabaseManagerDialog extends JDialog {
 		list.setListData(databaseManager.toArray());
 	}
 
+	/**
+	 * Called when a user requests to delete an existing database from the
+	 * context menu.
+	 * A JOptionPane will ask them if they are sure!
+	 */
 	private void deleteDatabase() {
 		Database selection = (Database) list.getSelectedValue();
 		if(selection != null && JOptionPane.showConfirmDialog(
@@ -187,6 +206,10 @@ public class DatabaseManagerDialog extends JDialog {
 		}
 	}
 
+	/**
+	 * Called by parent window or other client to get the
+	 * user's choice or response from this dialog.
+	 */
 	public Database getResponse() {
 		return response;
 	}

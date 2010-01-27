@@ -1,3 +1,8 @@
+/**
+ * A single class to handle a collection of databases as well as
+ * their persistence.
+ * DOCUMENT ME!
+ */
 package database;
 
 import java.io.*;

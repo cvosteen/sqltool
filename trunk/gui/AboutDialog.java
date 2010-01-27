@@ -1,4 +1,3 @@
-package gui;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -38,8 +37,8 @@ public class AboutDialog extends JDialog {
 		"THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH " +
 		"DAMAGE.</p></font>";
 
-	public AboutDialog(Frame owner) {
-		super(owner, "About " + SQLTool.APP_NAME, true);
+	public AboutDialog(Frame owner, String name, String version) {
+		super(owner, "About " + name, true);
 
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
@@ -54,7 +53,7 @@ public class AboutDialog extends JDialog {
 	
 		// Add the title
 		c.weightx = 1.0;
-		JLabel label = new JLabel(SQLTool.APP_NAME + " v" + SQLTool.APP_VERSION);
+		JLabel label = new JLabel(name + " v" + version);
 		Font font = label.getFont();
 		label.setFont(new Font(font.getFontName(), Font.BOLD, font.getSize()));
 		gridbag.setConstraints(label, c);

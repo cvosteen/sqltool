@@ -139,6 +139,9 @@ public class DatabaseDialog extends JDialog {
 
 	}
 	
+	/**
+	 * Called when the user presses 'Enter' or clicks 'Save'
+	 */
 	private void saveDatabase() {
 		try {
 			database = new Database(nameField.getText(), driverField.getText(), urlField.getText());
@@ -148,8 +151,12 @@ public class DatabaseDialog extends JDialog {
 			JOptionPane.showMessageDialog(this, f.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
+
+	/**
+	 * Called by parent window or other client to get the
+	 * user's choice or response from this dialog.
+	 */
 	public Database getResponse() {
 		return database;
 	}
-
 }
