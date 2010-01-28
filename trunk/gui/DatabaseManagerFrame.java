@@ -9,7 +9,7 @@ import java.sql.*;
 import java.util.*;
 import javax.swing.*;
 
-public class DatabaseManagerFrame extends JFrame {
+public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent {
 
 	private DatabaseManager databaseManager;
 	private JTabbedPane tabbedPane;
@@ -151,7 +151,7 @@ public class DatabaseManagerFrame extends JFrame {
 		Database database = dialog.getResponse();
 		if(database != null) {
 			try {
-				JComponent newPanel = new DatabasePanel(this, database);
+				JComponent newPanel = new ConcreteDatabasePanel(this, database);
 				tabbedPane.addTab(database.getName(), newPanel);
 				tabbedPane.setSelectedComponent(newPanel);
 			} catch(SQLException f) {
@@ -207,4 +207,31 @@ public class DatabaseManagerFrame extends JFrame {
 		dispose();
 	}
 
+	/**
+	 * When requested by a DatabasePanel, all databases are saved to disk.
+	 */
+	public void saveRequested(DatabasePanel databasePanel) {
+		databaseManager.save();
+	}
+
+	/**
+	 * When requested by a DatabasePanel, the component to be printed is
+	 * retrieved from that DatabasePanel and printed.
+	 */
+	public void printRequested(DatabasePanel databasePanel) {
+		PrinterJob job = PrinterJob.getPrinterJob();
+		Printable p = databasePanel.getPrintableComponent();
+		job.setPrintable(p, pageFormat);
+		boolean ok = job.printDialog();
+		if(ok) {
+			try {
+				job.print();
+			} catch (PrinterException e) {
+				JOptionPane.showMessageDialog(this,
+					e.getMessage(), "Print Error",
+					JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
 }
+
