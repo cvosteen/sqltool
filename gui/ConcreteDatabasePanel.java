@@ -1,6 +1,8 @@
 package gui;
 
 import database.*;
+import task.*;
+import tasks.*;
 import gui.components.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -15,6 +17,7 @@ import javax.swing.tree.*;
 
 public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
+	private DatabasePanelParent parent;
 	private Database database;
 	private Connection connection;
 	private JTree tree;
@@ -32,7 +35,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		// This one CAN be null
 		this.parent = parent;
 
-		if(theDatabase == null)
+		if(database == null)
 			throw new NullPointerException("Cannot open database, none specified!");
 		this.database = database;
 		
@@ -217,7 +220,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		JMenuItem printMenuItem = new JMenuItem("Print...");
 		printMenuItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					parent.printRequested(this);
+					printTable();
 				}
 			});
 		popup.add(printMenuItem);
@@ -236,7 +239,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		table.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), "doPrint");
 		table.getActionMap().put("doPrint", new AbstractAction() {
 				public void actionPerformed(ActionEvent e) {
-					parent.printRequested(this);
+					printTable();
 				}
 			});
 		JScrollPane tableScroll = new JScrollPane(table);	
@@ -257,19 +260,12 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				JOptionPane.WARNING_MESSAGE) ==	JOptionPane.YES_OPTION;
 
 		if(newQuery != null && okay) {
-				try {
-					database.saveQuery(newQuery, sql);
-					queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
-					sqlField.setText(sql);
-					queryCombo.setSelectedItem(newQuery);
-					databaseManager.save();
-					saveButton.setEnabled(false);
-				} catch(IOException e) {
-					JOptionPane.showMessageDialog(this,
-						e.getMessage(), "Error",
-						JOptionPane.ERROR_MESSAGE);
-				}
-
+				database.saveQuery(newQuery, sql);
+				queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
+				sqlField.setText(sql);
+				queryCombo.setSelectedItem(newQuery);
+				parent.saveRequested(this);
+				saveButton.setEnabled(false);
 		}
 	}
 
@@ -278,26 +274,32 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		if(delQuery != null && JOptionPane.showConfirmDialog(this, "Are you sure you want to delete " +
 				       	delQuery + "?", "Delete Query", JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) ==	JOptionPane.YES_OPTION) {
-			try {
-				database.deleteQuery(delQuery);
-				databaseManager.save();
-				queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
-				sqlField.setText(database.getQuerySql((String) queryCombo.getSelectedItem()));
-				saveButton.setEnabled(false);
-			} catch(IOException e) {
-				JOptionPane.showMessageDialog(this,
-					e.getMessage(), "Error",
-					JOptionPane.ERROR_MESSAGE);
-			}
+			database.deleteQuery(delQuery);
+			parent.saveRequested(this);
+			queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
+			sqlField.setText(database.getQuerySql((String) queryCombo.getSelectedItem()));
+			saveButton.setEnabled(false);
 		}
 	}
 
 	private void runQuery() {
 		runButton.setEnabled(false);
 		queryStatusLabel.setText("Working...");
-		Task queryTask = new QueryTask(connection, sqlField.getText());
-		queryTask.addTaskListener(new QueryTaskListener());
-		queryTask.start();
+		try {
+			Task queryTask = new QueryTask(connection, sqlField.getText());
+			queryTask.addTaskListener(new QueryTaskListener());
+			queryTask.start();
+		} catch(SQLException e) {
+			queryStatusLabel.setText("Error");
+			JOptionPane.showMessageDialog(this,
+				e.getMessage(), "Error",
+				JOptionPane.ERROR_MESSAGE);
+			runButton.setEnabled(true);
+		}
+	}
+
+	private void printTable() {
+		parent.printRequested(this);
 	}
 
 	protected void adjustTableColumns(JTable theTable) {
@@ -343,15 +345,9 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			// must prompt for name if there are no queries selected
 			newQuery(sqlField.getText());
 		} else {
-			try {
-				database.saveQuery(saveQuery, sqlField.getText());
-				databaseManager.save();
-				saveButton.setEnabled(false);
-			} catch(IOException e) {
-				JOptionPane.showMessageDialog(this,
-					e.getMessage(), "Error",
-					JOptionPane.ERROR_MESSAGE);
-			}
+			database.saveQuery(saveQuery, sqlField.getText());
+			parent.saveRequested(this);
+			saveButton.setEnabled(false);
 		}
 	}
 
@@ -394,7 +390,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	public void shutdown() {
 		// TODO: Ask to save any unsaved changed to text field!
 		try {
-			database.disconnect();
+			connection.close();
 		} catch(Exception f) {
 			// Ignore all exceptions
 			// Nothing much we can do here anyway
@@ -403,7 +399,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 	public void commit() {
 		try {
-			database.commit();
+			connection.commit();
 		} catch(SQLException f) {
 			JOptionPane.showMessageDialog(this,
 				f.getMessage(), "Error",
@@ -417,7 +413,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 	public void rollback() {
 		try {
-			database.rollback();
+			connection.rollback();
 		} catch(SQLException f) {
 			JOptionPane.showMessageDialog(this,
 				f.getMessage(), "Error",
@@ -429,33 +425,51 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
-	private class QueryTaskListener implements QueryListener {
+	private class QueryTaskListener implements TaskListener {
 		public void taskFinished() {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
+						adjustTableColumns(table);
 						runButton.setEnabled(true);
 					}
 				});
 			} catch(Exception f) { }
 		}
 
-		public void taskStatus(Object obj) {
+		public void taskStatus(final Object obj) {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
-						// Dump received rows into table
+						DefaultTableModel model = (DefaultTableModel) table.getModel();
+						if(obj instanceof Vector && ((Vector) obj).size() > 0) {
+							Vector vector = (Vector) obj;
+							if(vector.get(0) instanceof String) {
+								// We have column names
+								for(Object column : vector) {
+									model.addColumn(column);
+								}
+							} else {
+								// We have rows of data
+								for(Object row : vector) {
+									if(row instanceof Vector) {
+										model.addRow((Vector) row);
+									}
+								}
+							}
+						}
+
 					}
 				});
 			} catch(Exception f) { }
 		}
 
-		public void taskResult(Object obj) {
+		public void taskResult(final Object obj) {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
-						parent.queryStatusLabel.setText("Ready");
-						JOptionPane.showMessageDialog(parent.databaseManagerFrame,
+						queryStatusLabel.setText("Ready");
+						JOptionPane.showMessageDialog(null,
 							"" + obj + " rows updated.", "Update Executed",
 							JOptionPane.INFORMATION_MESSAGE);
 					}
@@ -463,13 +477,13 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			} catch(Exception f) { }
 		}
 
-		public void taskError(Exception e) {
+		public void taskError(final Exception e) {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
 						queryStatusLabel.setText("Error");
-						JOptionPane.showMessageDialog(this,
-							f.getMessage(), "Error",
+						JOptionPane.showMessageDialog(null,
+							e.getMessage(), "Error",
 							JOptionPane.ERROR_MESSAGE);
 					}
 				});
@@ -478,108 +492,3 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	}
 }
 
-
-
-
-
-class DatabasePanelQueryListener implements QueryListener {
-
-	QueryThread qt;
-	DatabasePanel parent;
-
-	public DatabasePanelQueryListener(QueryThread qt, DatabasePanel parent) {
-		this.qt = qt;
-		this.parent = parent;
-	}
-
-	// These methods are called in a non Event Handling Thread
-	public void queryFailed() {
-		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-					public void run() {
-						JOptionPane.showMessageDialog(
-							parent.databaseManagerFrame,
-							qt.getError().getMessage(), 
-							"Error",
-							JOptionPane.ERROR_MESSAGE);
-						parent.queryStatusLabel.setText("Error");
-						parent.runButton.setEnabled(true);
-					}
-				});
-		} catch(Exception f) { }
-	}
-
-	public void queryCompleted() {
-		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-					public void run() {
-						parent.queryStatusLabel.setText("0 records");
-						final Object result = qt.getResult();
-						if(result instanceof ResultSet) {
-							SQLTableModel tableModel = new SQLTableModel((ResultSet)result);
-							parent.table.setModel(tableModel);
-							parent.adjustTableColumns(parent.table);
-							tableModel.addSQLTableModelListener(
-								new DatabasePanelSQLTableModelListener(parent, tableModel));
-							tableModel.start();
-						} else if(result instanceof Integer) {
-							JOptionPane.showMessageDialog(parent.databaseManagerFrame,
-								"" + result + " rows updated.", "Update Executed",
-								JOptionPane.INFORMATION_MESSAGE);
-							parent.queryStatusLabel.setText("Ready");
-							parent.runButton.setEnabled(true);
-						}
-					}
-				});
-		} catch(Exception f) { }
-	}
-}
-
-class DatabasePanelSQLTableModelListener implements SQLTableModelListener {
-
-	private DatabasePanel parent;
-	private SQLTableModel tableModel;
-
-	public DatabasePanelSQLTableModelListener(DatabasePanel parent, SQLTableModel tableModel) {
-		this.parent = parent;
-		this.tableModel = tableModel;
-	}
-
-	public void dataReceived() {
-		int recs = tableModel.getRowCount();
-		if(recs == 1)
-			parent.queryStatusLabel.setText("" + recs + " record");
-		else
-			parent.queryStatusLabel.setText("" + recs + " records");
-	}
-
-	public void dataComplete() {
-		int recs = tableModel.getRowCount();
-		if(recs == 1)
-			parent.queryStatusLabel.setText("" + recs + " record");
-		else
-			parent.queryStatusLabel.setText("" + recs + " records");
-		tableModel.fireTableStructureChanged();
-		parent.adjustTableColumns(parent.table);
-		try { tableModel.getResultSet().close(); } catch(SQLException f) { }
-		parent.runButton.setEnabled(true);
-	}
-
-	public void errorOccurred(SQLException e) {
-		JOptionPane.showMessageDialog(parent.databaseManagerFrame,
-			e.getMessage(), "Error",
-			JOptionPane.ERROR_MESSAGE);
-		parent.adjustTableColumns(parent.table);
-		try { tableModel.getResultSet().close(); } catch(SQLException f) { }
-		if(parent.queryStatusLabel.getText() == "Working...") {
-			parent.queryStatusLabel.setText("Error");
-		} else {
-			int recs = tableModel.getRowCount();
-			if(recs == 1)
-				parent.queryStatusLabel.setText("" + recs + " record");
-			else
-				parent.queryStatusLabel.setText("" + recs + " records");
-		}
-		parent.runButton.setEnabled(true);
-	}
-}
