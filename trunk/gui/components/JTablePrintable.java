@@ -1,4 +1,12 @@
+/**
+ * JTablePrintable wraps a JTable and implements the Printable
+ * interface.
+ * This class prints the table as a plain grid with bold headings
+ * and automatically splits pages horizontally and vertically.
+ */
+
 package gui.components;
+
 import java.awt.*;
 import java.awt.print.*;
 import java.util.*;
@@ -9,6 +17,9 @@ public class JTablePrintable implements Printable {
 
 	JTable table;
 	ArrayList<TableEntity> entities = null;
+	String title = "";
+	TableEntity titleEntity = null;
+	
 	int maxPageX = 0;
 	int maxPageY = 0;
 	final Font plainFont = new Font("Arial", Font.PLAIN, 8);
@@ -21,22 +32,42 @@ public class JTablePrintable implements Printable {
 		this.table = table;
 	}
 
+	/**
+	 * Sets a title to be printed at the top of each page
+	 * in the margins.
+	 */
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
 	public int print(Graphics g, PageFormat pf, int page) throws PrinterException {
-		// Translate so it fits within the imageable area
 		Graphics2D g2d = (Graphics2D) g;
-		g2d.translate(pf.getImageableX(), pf.getImageableY());
 		
 		// Set the font, default is too big
 		g.setFont(plainFont);
+
+		// Translate so it fits within the imageable area
+		// and leave room for the title
+		int lineheight = g.getFontMetrics().getHeight() + (2 * yPadding);
+		g2d.translate(pf.getImageableX(), pf.getImageableY() + 2 * lineheight);
 
 		// All work should be done here to list all entities and their coordinates
 		// and page numbers
 		if(entities == null) {
 			entities = new ArrayList<TableEntity>();
 			TableModel model = table.getModel();
+		
+			// Generate the title entity
+			// The title should be halfway in the margin
+			int titleY = (int) -2 * lineheight;	
+			// and bold
+			g.setFont(boldFont);
+			// and centered
+			int titleWidth = g.getFontMetrics().stringWidth(title);
+			int titleX = (int)(pf.getImageableWidth() / 2) - (titleWidth / 2);
+			titleEntity = new TableEntity(title, true, false, titleX, titleY, titleWidth, lineheight, -1, -1);
 			
 			// Collect table entities one column at a time
-			int lineheight = g.getFontMetrics().getHeight() + (2 * yPadding);
 			int currentX = 0;
 			for(int col = 0; col < model.getColumnCount(); col++) {
 				// First calc the column's width
@@ -122,9 +153,6 @@ public class JTablePrintable implements Printable {
 				pageX++;
 			}
 			maxPageX = pageX - 1;
-			// Calc total height in pages (easy)
-			// maxPageX = (int) (pf.getImageableHeight() / (lineheight * model.getRowCount())) + 1;
-
 		}
 
 		// For now let's only print one page
@@ -136,20 +164,10 @@ public class JTablePrintable implements Printable {
 			return NO_SUCH_PAGE;
 
 		// Now print the table entities
+		titleEntity.draw(g);
 		for(TableEntity e : entities) {
 			if(page == (e.pageX * (maxPageY + 1)) + e.pageY) {
-				if(e.bold)
-					g.setFont(boldFont);
-
-				FontMetrics fm = g.getFontMetrics();
-				int ypad = yPadding + fm.getLeading() + fm.getAscent();
-				g.drawString(e.text, e.x + xPadding, e.y + ypad);
-
-				if(e.boxed)
-					g.drawRect(e.x, e.y, e.width, e.height);
-
-				if(e.bold)
-					g.setFont(plainFont);
+				e.draw(g);
 			}
 		}
 		
@@ -178,6 +196,20 @@ public class JTablePrintable implements Printable {
 			this.height = height;
 			this.pageX = pageX;
 			this.pageY = pageY;
+		}
+
+		public void draw(Graphics g) {
+			if(bold)
+				g.setFont(boldFont);
+			else
+				g.setFont(plainFont);
+
+			FontMetrics fm = g.getFontMetrics();
+			int ypad = yPadding + fm.getLeading() + fm.getAscent();
+			g.drawString(text, x + xPadding, y + ypad);
+
+			if(boxed)
+				g.drawRect(x, y, width, height);
 		}
 	}
 

@@ -385,7 +385,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 
 	public Printable getPrintableComponent() {
-		return new JTablePrintable(table);
+		JTablePrintable jtp = new JTablePrintable(table);
+		String title = (String) queryCombo.getSelectedItem();
+		if(title != null)
+			jtp.setTitle(title);
+		return jtp;
 	}
 
 	public void shutdown() {
