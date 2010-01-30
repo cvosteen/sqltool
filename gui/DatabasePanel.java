@@ -7,6 +7,7 @@
  * container.
  */
 package gui;
+import java.awt.print.*;
 
 public interface DatabasePanel {
 
