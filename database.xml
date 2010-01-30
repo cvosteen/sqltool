@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <databases>
-<database name="Test">
+<database name="Query Sample">
 <driver>sun.jdbc.odbc.JdbcOdbcDriver</driver>
-<url>jdbc:odbc:Driver={Microsoft dBase VFP Driver (*.dbf)};DBQ=C:\Users\Christian\Programs\Python\dbf2;</url>
+<url>jdbc:odbc:Driver={Microsoft Access Driver (*.mdb)};DBQ=C:\Users\Christian\Desktop\QrySampl.mdb;</url>
+<query name="Customer List">SELECT * FROM Customers</query>
 </database>
 </databases>

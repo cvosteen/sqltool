@@ -285,6 +285,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	private void runQuery() {
 		runButton.setEnabled(false);
 		queryStatusLabel.setText("Working...");
+		table.setModel(new DefaultTableModel());
 		try {
 			Task queryTask = new QueryTask(connection, sqlField.getText());
 			queryTask.addTaskListener(new QueryTaskListener());
@@ -426,6 +427,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	}
 
 	private class QueryTaskListener implements TaskListener {
+		private int rowsReceived = 0;
+
 		public void taskFinished() {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
@@ -449,13 +452,16 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 								for(Object column : vector) {
 									model.addColumn(column);
 								}
+								queryStatusLabel.setText("0 rows");
 							} else {
 								// We have rows of data
 								for(Object row : vector) {
 									if(row instanceof Vector) {
+										rowsReceived += 1;
 										model.addRow((Vector) row);
 									}
 								}
+								queryStatusLabel.setText("" + rowsReceived + " rows");
 							}
 						}
 
