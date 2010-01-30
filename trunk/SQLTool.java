@@ -18,7 +18,7 @@ public class SQLTool {
 		JFrame.setDefaultLookAndFeelDecorated(true);
 
 		// Create the application
-		DatabaseManager databaseManager = DatabaseManager.instanceForFile(DATA_FILE);
+		DatabaseManager databaseManager = new DatabaseManager(DATA_FILE);
 
 		try {
 			// If the file is formatted incorrectly, or nonexistent this may fail
@@ -37,6 +37,6 @@ public class SQLTool {
 				JOptionPane.WARNING_MESSAGE);
 		}
 
-		new DatabaseManagerFrame();
+		new DatabaseManagerFrame(databaseManager, APP_NAME, APP_VERSION);
 	}
 }

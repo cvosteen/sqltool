@@ -213,7 +213,13 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	 * When requested by a DatabasePanel, all databases are saved to disk.
 	 */
 	public void saveRequested(DatabasePanel databasePanel) {
-		databaseManager.save();
+		try {
+			databaseManager.save();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(this,
+				e.getMessage(), "Save Error",
+				JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	/**
