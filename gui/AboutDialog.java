@@ -1,3 +1,8 @@
+/**
+ * Very plain information dialog to show basic information about
+ * this application as well as the license.
+ */
+
 package gui;
 import java.awt.*;
 import java.awt.event.*;

@@ -26,7 +26,7 @@ public class JTablePrintable implements Printable {
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.translate(pf.getImageableX(), pf.getImageableY());
 		
-		// Set the font, default it too big
+		// Set the font, default is too big
 		g.setFont(plainFont);
 
 		// All work should be done here to list all entities and their coordinates
@@ -129,6 +129,10 @@ public class JTablePrintable implements Printable {
 
 		// For now let's only print one page
 		if(page > ((maxPageY + 1) * (maxPageX + 1)) - 1)
+			return NO_SUCH_PAGE;
+
+		// This shouldn't happen, but better safe than sorry :P
+		if(page < 1)
 			return NO_SUCH_PAGE;
 
 		// Now print the table entities

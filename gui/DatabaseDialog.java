@@ -1,4 +1,10 @@
+/**
+ * A dialog that allows a user to edit the fields of a Database
+ * object.
+ */
+
 package gui;
+
 import database.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -6,6 +12,7 @@ import javax.swing.*;
 
 public class DatabaseDialog extends JDialog implements ResponseGetter<Database> {
 
+	// Use some sensible defaults for a new Database
 	private static final String DEFAULT_DRIVER = "sun.jdbc.odbc.JdbcOdbcDriver";
 	private static final String DEFAULT_URL = "jdbc:odbc:";
 
@@ -14,6 +21,10 @@ public class DatabaseDialog extends JDialog implements ResponseGetter<Database> 
 	private final JTextField driverField = new JTextField(20);
 	private final JTextField urlField = new JTextField(20);
 
+	/**
+	 * Creates a DatabaseDialog that will return a new
+	 * Database instance.
+	 */
 	public DatabaseDialog(Dialog owner) {
 		super(owner, "Database", true);
 
@@ -26,6 +37,10 @@ public class DatabaseDialog extends JDialog implements ResponseGetter<Database> 
 		setVisible(true);
 	}
 
+	/**
+	 * Creates a DatabaseDialog that will edit an existing
+	 * Database instance.
+	 */
 	public DatabaseDialog(Dialog owner, Database theDatabase) {
 		super(owner, "Database", true);
 
