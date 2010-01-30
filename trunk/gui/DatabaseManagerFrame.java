@@ -1,3 +1,7 @@
+/**
+ * The main GUI window.
+ * It will hold multiple DatabasePanels in a JTabbedPane.
+ */
 package gui;
 
 import database.*;
@@ -40,6 +44,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 				}
 			});
 
+		// Set up our menu bar
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);

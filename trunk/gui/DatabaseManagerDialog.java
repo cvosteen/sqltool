@@ -1,4 +1,14 @@
+/**
+ * A Dialog that allows a user to add/edit/delete a list of
+ * Database instances via a DatabaseManager instance.
+ * If the user selects one of the Databases and clicks the
+ * 'Connect' button, the response from this Dialog will
+ * be the Database, instructing the caller to connect
+ * to the database.
+ */
+
 package gui;
+
 import database.*;
 import java.awt.*;
 import java.awt.event.*;

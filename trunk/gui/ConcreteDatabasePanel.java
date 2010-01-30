@@ -13,11 +13,10 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 import javax.swing.tree.*;
 
-public class DatabasePanel extends JSplitPane {
+public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 	private Database database;
 	private Connection connection;
-	private RestrictedDatabaseManager restrictedDatabaseManager = null;
 	private JTree tree;
 	private JComboBox queryCombo;
 	private JTextArea sqlField;
@@ -27,8 +26,11 @@ public class DatabasePanel extends JSplitPane {
 	protected JButton saveButton;
 	protected JLabel queryStatusLabel;
 
-	public DatabasePanel(Database database) throws SQLException, ClassNotFoundException {
+	public ConcreteDatabasePanel(DatabasePanelParent parent, Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
+
+		// This one CAN be null
+		this.parent = parent;
 
 		if(theDatabase == null)
 			throw new NullPointerException("Cannot open database, none specified!");
@@ -39,10 +41,6 @@ public class DatabasePanel extends JSplitPane {
 		createComponents();
 	}
 	
-	public void setRestrictedDatabaseManager(RestrictedDatabaseManager restrictedDatabaseManager) {
-		this.restrictedDatabaseManager = restrictedDatabaseManager;
-	}
-
 	private void createComponents() {
 		// Put the tree on the left side of the divider.
 		DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Root");
@@ -219,7 +217,7 @@ public class DatabasePanel extends JSplitPane {
 		JMenuItem printMenuItem = new JMenuItem("Print...");
 		printMenuItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					printTable();
+					parent.printRequested(this);
 				}
 			});
 		popup.add(printMenuItem);
@@ -238,7 +236,7 @@ public class DatabasePanel extends JSplitPane {
 		table.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), "doPrint");
 		table.getActionMap().put("doPrint", new AbstractAction() {
 				public void actionPerformed(ActionEvent e) {
-					printTable();
+					parent.printRequested(this);
 				}
 			});
 		JScrollPane tableScroll = new JScrollPane(table);	
@@ -297,9 +295,9 @@ public class DatabasePanel extends JSplitPane {
 	private void runQuery() {
 		runButton.setEnabled(false);
 		queryStatusLabel.setText("Working...");
-		QueryThread qt = database.executeThreadedSql(sqlField.getText());
-		qt.addQueryListener(new DatabasePanelQueryListener(qt, this));
-		qt.start();
+		Task queryTask = new QueryTask(connection, sqlField.getText());
+		queryTask.addTaskListener(new QueryTaskListener());
+		queryTask.start();
 	}
 
 	protected void adjustTableColumns(JTable theTable) {
@@ -357,19 +355,49 @@ public class DatabasePanel extends JSplitPane {
 		}
 	}
 
-	public void printTable() {
-		PrinterJob job = PrinterJob.getPrinterJob();
-		PageFormat pf = databaseManagerFrame.getPageFormat();
-		job.setPrintable(new JTablePrintable(table), pf);
-		boolean ok = job.printDialog();
-		if(ok) {
-			try {
-				job.print();
-			} catch (PrinterException e) {
-				JOptionPane.showMessageDialog(this,
-					e.getMessage(), "Print Error",
-					JOptionPane.ERROR_MESSAGE);
+	private void expandDatabaseTree(DefaultMutableTreeNode dbNode) {
+		try {
+			dbNode.removeAllChildren();
+			java.util.List<String> tables = database.getTables(connection);
+			for(String table : tables) {
+				DefaultMutableTreeNode tableNode = new DefaultMutableTreeNode(table);
+				tableNode.add(new DefaultMutableTreeNode("Placeholder"));
+				dbNode.add(tableNode);
 			}
+		} catch(SQLException e) {
+			JOptionPane.showMessageDialog(this,
+				e.getMessage(), "Error",
+				JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	private void expandTableTree(DefaultMutableTreeNode tableNode) {
+		try {
+			tableNode.removeAllChildren();
+			java.util.List<String> columns = database.getColumns(connection, (String)tableNode.getUserObject());
+			for(String column : columns) {
+				DefaultMutableTreeNode columnNode = new DefaultMutableTreeNode(column);
+				tableNode.add(columnNode);
+			}
+		} catch(SQLException e) {
+			JOptionPane.showMessageDialog(this,
+				e.getMessage(), "Error",
+				JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+
+	public Printable getPrintableComponent() {
+		return new JTablePrintable(table);
+	}
+
+	public void shutdown() {
+		// TODO: Ask to save any unsaved changed to text field!
+		try {
+			database.disconnect();
+		} catch(Exception f) {
+			// Ignore all exceptions
+			// Nothing much we can do here anyway
 		}
 	}
 
@@ -401,47 +429,55 @@ public class DatabasePanel extends JSplitPane {
 		}
 	}
 
-	public void shutdown() {
-		// TODO: Ask to save any unsaved changed to text field!
-		try {
-			database.disconnect();
-		} catch(Exception f) {
-			// Ignore all exceptions
-			// Nothing much we can do here anyway
+	private class QueryTaskListener implements QueryListener {
+		public void taskFinished() {
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						runButton.setEnabled(true);
+					}
+				});
+			} catch(Exception f) { }
 		}
-	}
 
-	public void expandDatabaseTree(DefaultMutableTreeNode dbNode) {
-		try {
-			dbNode.removeAllChildren();
-			java.util.List<String> tables = database.getTables(connection);
-			for(String table : tables) {
-				DefaultMutableTreeNode tableNode = new DefaultMutableTreeNode(table);
-				tableNode.add(new DefaultMutableTreeNode("Placeholder"));
-				dbNode.add(tableNode);
-			}
-		} catch(SQLException e) {
-			JOptionPane.showMessageDialog(this,
-				e.getMessage(), "Error",
-				JOptionPane.ERROR_MESSAGE);
+		public void taskStatus(Object obj) {
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						// Dump received rows into table
+					}
+				});
+			} catch(Exception f) { }
 		}
-	}
 
-	public void expandTableTree(DefaultMutableTreeNode tableNode) {
-		try {
-			tableNode.removeAllChildren();
-			java.util.List<String> columns = database.getColumns(connection, (String)tableNode.getUserObject());
-			for(String column : columns) {
-				DefaultMutableTreeNode columnNode = new DefaultMutableTreeNode(column);
-				tableNode.add(columnNode);
-			}
-		} catch(SQLException e) {
-			JOptionPane.showMessageDialog(this,
-				e.getMessage(), "Error",
-				JOptionPane.ERROR_MESSAGE);
+		public void taskResult(Object obj) {
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						parent.queryStatusLabel.setText("Ready");
+						JOptionPane.showMessageDialog(parent.databaseManagerFrame,
+							"" + obj + " rows updated.", "Update Executed",
+							JOptionPane.INFORMATION_MESSAGE);
+					}
+				});
+			} catch(Exception f) { }
+		}
+
+		public void taskError(Exception e) {
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						queryStatusLabel.setText("Error");
+						JOptionPane.showMessageDialog(this,
+							f.getMessage(), "Error",
+							JOptionPane.ERROR_MESSAGE);
+					}
+				});
+			} catch(Exception f) { }
 		}
 	}
 }
+
 
 
 
