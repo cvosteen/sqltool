@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-public class DatabaseDialog extends JDialog {
+public class DatabaseDialog extends JDialog implements ResponseGetter<Database> {
 
 	private static final String DEFAULT_DRIVER = "sun.jdbc.odbc.JdbcOdbcDriver";
 	private static final String DEFAULT_URL = "jdbc:odbc:";

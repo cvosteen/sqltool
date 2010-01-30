@@ -11,13 +11,17 @@ import javax.swing.*;
 
 public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent {
 
+	private String name;
+	private String version;
 	private DatabaseManager databaseManager;
 	private JTabbedPane tabbedPane;
 	private PageFormat pageFormat = new PageFormat();
 
 	public DatabaseManagerFrame(DatabaseManager databaseManager, String name, String version) {
 		super(name + " v" + version);
-
+		
+		this.name = name;
+		this.version = version;
 		this.databaseManager = databaseManager;
 		createComponents();
 	}
@@ -42,7 +46,11 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 		JMenuItem printItem = new JMenuItem("Print...");
 		printItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					printTable();
+					// Get the selected DatabasePanel
+					int index = tabbedPane.getSelectedIndex();
+					if(index != -1)	{
+						printRequested((DatabasePanel) tabbedPane.getComponentAt(index));
+					}
 				}
 			});
 		fileMenu.add(printItem);
@@ -98,7 +106,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 		JMenuItem aboutItem = new JMenuItem("About");
 		aboutItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					new AboutDialog(null);
+					new AboutDialog(null, name, version);
 				}
 			});
 		helpMenu.add(aboutItem);
@@ -122,17 +130,6 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	}
 
 	/**
-	 * Asks the current DatabasePanel to print its table using the
-	 * current PageFormat
-	 */
-	private void printTable() {
-		int index = tabbedPane.getSelectedIndex();
-		if(index != -1)	{
-			((DatabasePanel) tabbedPane.getComponentAt(index)).printTable(pageFormat);
-		}
-	}
-
-	/**
 	 * Allow the user to modify the current PageFormat.
 	 */
 	private void pageSetup() {
@@ -147,7 +144,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	 * adds it to the Tabbed Pane.
 	 */
 	private void connect() {
-		DatabaseManagerDialog dialog = new DatabaseManagerDialog(this);
+		ResponseGetter<Database> dialog = new DatabaseManagerDialog(this, databaseManager);
 		Database database = dialog.getResponse();
 		if(database != null) {
 			try {

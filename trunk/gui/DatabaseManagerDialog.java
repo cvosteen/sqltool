@@ -5,7 +5,7 @@ import java.awt.event.*;
 import java.io.*;
 import javax.swing.*;
 
-public class DatabaseManagerDialog extends JDialog {
+public class DatabaseManagerDialog extends JDialog implements ResponseGetter<Database> {
 
 	private final DatabaseManager databaseManager;
 	private JList list;
@@ -141,7 +141,7 @@ public class DatabaseManagerDialog extends JDialog {
 	 * A DatabaseDialog is created to capture the user's preferences.
 	 */
 	private void newDatabase() {
-		DatabaseDialog dbDialog = new DatabaseDialog(this);
+		ResponseGetter<Database> dbDialog = new DatabaseDialog(this);
 		Database newDatabase = dbDialog.getResponse();
 		if(newDatabase != null) {
 			databaseManager.add(newDatabase);
@@ -165,7 +165,7 @@ public class DatabaseManagerDialog extends JDialog {
 	private void editDatabase() {
 		Database selection = (Database) list.getSelectedValue();
 		if(selection != null) {
-			DatabaseDialog dbDialog = new DatabaseDialog(this, selection);
+			ResponseGetter<Database> dbDialog = new DatabaseDialog(this, selection);
 			Database newDatabase = dbDialog.getResponse();
 			if(newDatabase != null) {
 				selection.setName(newDatabase.getName());
