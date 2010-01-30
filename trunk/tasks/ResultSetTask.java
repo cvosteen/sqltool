@@ -38,7 +38,7 @@ public class ResultSetTask extends Task {
 				data.add(row);
 
 				// Once per second report all rows so far
-				if(System.currentTimeMillis() - time >= 1000) {
+				if(System.currentTimeMillis() - time >= 100) {
 					// Check for cancellation
 					if(isCancelled())
 						return;
@@ -48,6 +48,10 @@ public class ResultSetTask extends Task {
 					data = new Vector<Vector<Object>>();
 				}
 			}
+			
+			// Send any remaining rows
+			reportStatus(data);
+
 		} catch(final SQLException e) {
 			reportError(e);
 		} finally {

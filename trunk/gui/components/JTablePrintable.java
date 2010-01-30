@@ -132,7 +132,7 @@ public class JTablePrintable implements Printable {
 			return NO_SUCH_PAGE;
 
 		// This shouldn't happen, but better safe than sorry :P
-		if(page < 1)
+		if(page < 0)
 			return NO_SUCH_PAGE;
 
 		// Now print the table entities
