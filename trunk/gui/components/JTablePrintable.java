@@ -9,6 +9,7 @@ package gui.components;
 
 import java.awt.*;
 import java.awt.print.*;
+import java.text.*;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -16,9 +17,10 @@ import javax.swing.table.*;
 public class JTablePrintable implements Printable {
 
 	JTable table;
-	ArrayList<TableEntity> entities = null;
+	ArrayList<TextEntity> entities = null;
 	String title = "";
-	TableEntity titleEntity = null;
+	TextEntity titleEntity = null;
+	TextEntity timestampEntity = null;
 	
 	int maxPageX = 0;
 	int maxPageY = 0;
@@ -40,119 +42,96 @@ public class JTablePrintable implements Printable {
 		this.title = title;
 	}
 
+	/**
+	 * Implement the printable interface.
+	 * Most of the calculations must take place here because we won't know
+	 * the size of the page etc. until print time.
+	 */
 	public int print(Graphics g, PageFormat pf, int page) throws PrinterException {
+		// Translate so it fits within the imageable area
 		Graphics2D g2d = (Graphics2D) g;
+		g2d.translate(pf.getImageableX(), pf.getImageableY());
 		
 		// Set the font, default is too big
 		g.setFont(plainFont);
-
-		// Translate so it fits within the imageable area
-		// and leave room for the title
+		
+		// Standard height of a line of text
 		int lineheight = g.getFontMetrics().getHeight() + (2 * yPadding);
-		g2d.translate(pf.getImageableX(), pf.getImageableY() + 2 * lineheight);
+		
+		// The area within the page that the table will take up
+		// leaving room for headers and footers
+		Rectangle tableRect = new Rectangle(0, 2 * lineheight, (int) pf.getImageableWidth(), (int) pf.getImageableHeight() - (4 * lineheight));
+
+		// Number of table rows that will fit in a page
+		int rowsPerPage = tableRect.height / lineheight;
 
 		// All work should be done here to list all entities and their coordinates
-		// and page numbers
+		// and page numbers.  Ensure that these calculations are done only for the first
+		// page request.  After that use the already calculated data.
 		if(entities == null) {
-			entities = new ArrayList<TableEntity>();
+			entities = new ArrayList<TextEntity>();
 			TableModel model = table.getModel();
 		
 			// Generate the title entity
-			// The title should be halfway in the margin
-			int titleY = (int) -2 * lineheight;	
-			// and bold
 			g.setFont(boldFont);
-			// and centered
 			int titleWidth = g.getFontMetrics().stringWidth(title);
 			int titleX = (int)(pf.getImageableWidth() / 2) - (titleWidth / 2);
-			titleEntity = new TableEntity(title, true, false, titleX, titleY, titleWidth, lineheight, -1, -1);
+			titleEntity = new TextEntity(title, true, false, titleX, 0, titleWidth, lineheight, -1, -1);
 			
+			// Generate the timestamp entity
+			g.setFont(plainFont);
+			String timestamp = new SimpleDateFormat("EEE, MMM d, yyyy   h:mm a").format(new Date());
+			int timestampWidth = g.getFontMetrics().stringWidth(timestamp);
+			int timestampY = (int) pf.getImageableHeight() - lineheight;
+			timestampEntity = new TextEntity(timestamp, false, false, 0, timestampY, timestampWidth, lineheight, -1, -1);
+
 			// Collect table entities one column at a time
-			int currentX = 0;
+			// Keep track of the x coordinate as we traverse each column
+			// The y coordinate is just a multiple of lineheight
+			// The vertical page number is also easly calculated
+			int currentX = tableRect.x;
+			int pageX = 0;
 			for(int col = 0; col < model.getColumnCount(); col++) {
-				// First calc the column's width
-				int maxWidth = 0;
-				String thisString = model.getColumnName(col);
-				int thisWidth = g.getFontMetrics(boldFont).stringWidth(thisString);
-				if(thisWidth > maxWidth)
-					maxWidth = thisWidth;
-				for(int row = 0; row < model.getRowCount(); row++) {
-					Object value = model.getValueAt(row, col);
-					if(value == null)
-						value = "";
-					thisString = value.toString();
-					thisWidth = g.getFontMetrics().stringWidth(thisString);
-					if(thisWidth > maxWidth)
-						maxWidth = thisWidth;
+				int colWidth = getColumnWidth(model, g, col);
+				colWidth += (2 * xPadding);
+
+				// Advance pageX if needed
+				if(currentX + colWidth > tableRect.width && currentX > 0) {
+					currentX = 0;
+					pageX++;
 				}
-				maxWidth += (2 * xPadding);
 
 				// Now create the column's entities
-				thisString = model.getColumnName(col);
-				entities.add(new TableEntity(thisString, true, true, currentX, 0, maxWidth, lineheight, -1, -1));
+				String thisString = model.getColumnName(col);
+				entities.add(new TextEntity(thisString, true, true, currentX, tableRect.y, colWidth, lineheight, pageX, 0));
 				for(int row = 0; row < model.getRowCount(); row++) {
 					Object value = model.getValueAt(row, col);
 					if(value == null)
 						value = "";
 					thisString = value.toString();
-					entities.add(new TableEntity(thisString, false, true, currentX, (row + 1) * lineheight, maxWidth, lineheight, -1, -1));
+					int pageY = (row + 1) / rowsPerPage; // Add 1 for the headers
+					int y = ((row + 1) - (pageY * rowsPerPage)) * lineheight + tableRect.y;
+					entities.add(new TextEntity(thisString, false, true, currentX, y, colWidth, lineheight, pageX, pageY));
 				}
-				currentX += maxWidth;
+				currentX += colWidth;
+			}
+			maxPageX = pageX;
+			maxPageY = (model.getRowCount() + 1) / rowsPerPage;
+
+			// Generate the Page x of y footers
+			g.setFont(plainFont);
+			int totalPages = ((maxPageY + 1) * (maxPageX + 1));
+			for(int x = 0; x <= maxPageX; x++) {
+				for(int y = 0; y <= maxPageX; y++) {
+					int pageNum = (x * (maxPageY + 1)) + y + 1;
+					String pageFooter = "Page " + pageNum + " of " + totalPages;
+					int pageFooterY = (int) pf.getImageableHeight() - lineheight;
+					int pageFooterWidth = g.getFontMetrics().stringWidth(pageFooter);
+					int pageFooterX = (int) pf.getImageableWidth() - pageFooterWidth - xPadding;
+					entities.add(new TextEntity(pageFooter, false, false, pageFooterX, pageFooterY, pageFooterWidth, lineheight, x, y));
+				}
 			}
 
-			// Paginate the entities vertically
-			int pageHeight = (int) pf.getImageableHeight();
-			int pageY = 0;
-			int minY = 0;
-			boolean moreEntities = true;
-			while(moreEntities) {
-				int newMinY = 2000000000;
-				moreEntities = false;
-				for(TableEntity e : entities) {
-					if(e.pageY == -1) {
-						// Adjust height by previous page's content's height
-						e.y -= minY;
-						// Find all items on current page
-						if(e.y + e.height < pageHeight || e.y == 0) {
-							e.pageY = pageY;
-						} else {
-							moreEntities = true;
-							if(e.y < newMinY)
-								newMinY = e.y;
-						}
-					}
-				}
-				minY = newMinY;
-				pageY++;
-			}
-			maxPageY = pageY - 1;
-
-			// Paginate the entities horizontally
-			int pageWidth = (int) pf.getImageableWidth();
-			int pageX = 0;
-			int minX = 0;
-			moreEntities = true;
-			while(moreEntities) {
-				int newMinX = 2000000000;
-				moreEntities = false;
-				for(TableEntity e : entities) {
-					if(e.pageX == -1) {
-						// Adjust height by previous page's content's height
-						e.x -= minX;
-						// Find all items on current page
-						if(e.x + e.width < pageWidth || e.x == 0) {
-							e.pageX = pageX;
-						} else {
-							moreEntities = true;
-							if(e.x < newMinX)
-								newMinX = e.x;
-						}
-					}
-				}
-				minX = newMinX;
-				pageX++;
-			}
-			maxPageX = pageX - 1;
 		}
 
 		// For now let's only print one page
@@ -163,9 +142,10 @@ public class JTablePrintable implements Printable {
 		if(page < 0)
 			return NO_SUCH_PAGE;
 
-		// Now print the table entities
+		// Now print the text entities
 		titleEntity.draw(g);
-		for(TableEntity e : entities) {
+		timestampEntity.draw(g);
+		for(TextEntity e : entities) {
 			if(page == (e.pageX * (maxPageY + 1)) + e.pageY) {
 				e.draw(g);
 			}
@@ -174,7 +154,31 @@ public class JTablePrintable implements Printable {
 		return PAGE_EXISTS;
 	}
 
-	public class TableEntity {
+	/**
+	 * Calculates how wide a column needs to be to fit all of the
+	 * data for that column.
+	 */
+	private int getColumnWidth(TableModel model, Graphics g, int column) {
+		int maxWidth = 0;
+		// First get the column heading width
+		String thisString = model.getColumnName(column);
+		int thisWidth = g.getFontMetrics(boldFont).stringWidth(thisString);
+		maxWidth = thisWidth;
+
+		// Go row by row measuring each item's width
+		for(int row = 0; row < model.getRowCount(); row++) {
+			Object value = model.getValueAt(row, column);
+			if(value == null)
+				value = "";
+			thisString = value.toString();
+			thisWidth = g.getFontMetrics(plainFont).stringWidth(thisString);
+			if(thisWidth > maxWidth)
+				maxWidth = thisWidth;
+		}
+		return maxWidth;
+	}
+
+	public class TextEntity {
 		public String text;
 		public boolean bold;
 		public boolean boxed;
@@ -185,7 +189,7 @@ public class JTablePrintable implements Printable {
 		public int pageX;
 		public int pageY;
 
-		public TableEntity(String text, boolean bold, boolean boxed, int x, int y, int width, int height,
+		public TextEntity(String text, boolean bold, boolean boxed, int x, int y, int width, int height,
 				int pageX, int pageY) {
 			this.text = text;
 			this.bold = bold;

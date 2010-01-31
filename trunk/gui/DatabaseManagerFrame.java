@@ -230,6 +230,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 		PrinterJob job = PrinterJob.getPrinterJob();
 		Printable p = databasePanel.getPrintableComponent();
 		job.setPrintable(p, pageFormat);
+		job.setJobName(name);
 		boolean ok = job.printDialog();
 		if(ok) {
 			try {
