@@ -91,7 +91,10 @@ public class QueryTask extends Task {
 				// While this is running the user may request cancellation.
 				while(!t.isFinished() && !t.isCancelled()) {
 					// Every 0.1 second, check for cancellation
-					sleep(100);
+					try {
+						sleep(100);
+					} catch(InterruptedException e) { }
+
 					if(isCancelled()) {
 						t.cancel();
 					}
