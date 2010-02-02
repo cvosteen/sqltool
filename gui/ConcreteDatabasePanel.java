@@ -65,7 +65,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		JScrollPane treeScroll = new JScrollPane(tree);
 		setLeftComponent(treeScroll);
 		setDividerLocation(0.25);
-		setResizeWeight(0.25);
+		setResizeWeight(0.1);
 
 		// Split right side into top and bottom panels
 		JPanel topPanel = new JPanel();
@@ -80,7 +80,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		topPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 		topPanel.setLayout(gridbag);
 		c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(5,5,5,5);
+		c.insets = new Insets(4,4,4,4);
 
 		// Query ComboBox
 		c.weighty = 0.0;
@@ -105,7 +105,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 		// New query button
 		c.weightx = 0.0;
-		JButton newButton = new JButton("New");
+		JButton newButton = new JButton(new ImageIcon(this.getClass().getResource("icons/new_icon.png")));
+		newButton.setToolTipText("Create a new query.");
 		newButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						newQuery("");
@@ -114,12 +115,22 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		gridbag.setConstraints(newButton, c);
 		topPanel.add(newButton);
 		
+		// Rename query button
+		JButton renameButton = new JButton(new ImageIcon(this.getClass().getResource("icons/edit_icon.png")));
+		renameButton.setToolTipText("Rename the selected query.");
+		renameButton.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						renameQuery();
+					}
+			});
+		gridbag.setConstraints(renameButton, c);
+		topPanel.add(renameButton);
+		
 		// Delete query button
-		c.weightx = 0.1;
-		c.gridwidth = 1;
 		c.fill = GridBagConstraints.NONE;
 		c.anchor = GridBagConstraints.WEST;
-		JButton deleteButton = new JButton("Delete");
+		JButton deleteButton = new JButton(new ImageIcon(this.getClass().getResource("icons/delete_icon.png")));
+		deleteButton.setToolTipText("Delete the selected query.");
 		deleteButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						deleteQuery();
@@ -130,10 +141,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 		// Run query button
 		c.gridx = 6;
-		c.weightx = 0.0;
 		c.gridwidth = GridBagConstraints.REMAINDER;
 		c.fill = GridBagConstraints.BOTH;
-		runButton = new JButton("Run Query");
+		runButton = new JButton("Run Query", new ImageIcon(this.getClass().getResource("icons/run_icon.png")));
+		runButton.setToolTipText("Run the current query.");
 		runButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						runQuery();
@@ -156,7 +167,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		c.gridy = GridBagConstraints.RELATIVE;
 		c.weightx = 1.0;
 		c.weighty = 1.0;
-		c.gridwidth = 4;
+		c.gridwidth = 5;
 		c.gridheight = 2;
 		c.fill = GridBagConstraints.BOTH;
 		sqlField = new JTextArea(6, 1);
@@ -184,7 +195,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		c.gridwidth = GridBagConstraints.REMAINDER;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.anchor = GridBagConstraints.NORTH;
-		saveButton = new JButton("Save Query");
+		saveButton = new JButton("Save Query", new ImageIcon(this.getClass().getResource("icons/save_icon.png")));
+		saveButton.setToolTipText("Save changes to the current query.");
 		saveButton.setEnabled(false);
 		saveButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
@@ -195,8 +207,9 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		topPanel.add(saveButton);
 
 		// Status label
-		c.gridx = 5;
+		c.gridx = 6;
 		c.gridy = 2;
+		c.weighty = 0.0;
 		c.anchor = GridBagConstraints.SOUTHWEST;
 		queryStatusLabel = new JLabel("Ready");
 		gridbag.setConstraints(queryStatusLabel, c);
@@ -266,6 +279,37 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				queryCombo.setSelectedItem(newQuery);
 				parent.saveRequested(this);
 				saveButton.setEnabled(false);
+		}
+	}
+
+	private void renameQuery() {
+		boolean okay = true;
+		String oldQuery = (String) queryCombo.getSelectedItem();
+		if(oldQuery == null)
+			return;
+		String newQuery = (String) JOptionPane.showInputDialog(this,
+				"Enter Query Name:", "Rename Query", JOptionPane.PLAIN_MESSAGE,
+				null, null, oldQuery);
+		// If its already existing, ask before replacing it
+		if(database.getQuerySql(newQuery) != null)
+			okay = JOptionPane.showConfirmDialog(this,
+				newQuery + " already exists.  Overwrite it?", "Rename Query", JOptionPane.YES_NO_OPTION,
+				JOptionPane.WARNING_MESSAGE) ==	JOptionPane.YES_OPTION;
+
+		if(newQuery != null && okay) {
+				database.saveQuery(newQuery, database.getQuerySql(oldQuery));
+				database.deleteQuery(oldQuery);
+				// This will cause any unsaved changes in the editor to be overwritten
+				// Let's leave the unsaved changes.
+				String currentSql = sqlField.getText();
+				queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
+				queryCombo.setSelectedItem(newQuery);
+				// This ensures that if the query being renamed was edited, the pre-edit version
+				// will be saved under the new query name, and that if the user wishes to save
+				// the edits he/she has made he/she must click the "Save Query" button.
+				if(!currentSql.equals(sqlField.getText()))
+					sqlField.setText(currentSql);
+				parent.saveRequested(this);
 		}
 	}
 
@@ -456,7 +500,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 								for(Object column : vector) {
 									model.addColumn(column);
 								}
-								queryStatusLabel.setText("0 rows");
+								queryStatusLabel.setText("0 records");
 							} else {
 								// We have rows of data
 								for(Object row : vector) {
@@ -465,7 +509,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 										model.addRow((Vector) row);
 									}
 								}
-								queryStatusLabel.setText("" + rowsReceived + " rows");
+								queryStatusLabel.setText("" + rowsReceived + " records");
 							}
 						}
 
@@ -480,7 +524,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 					public void run() {
 						queryStatusLabel.setText("Ready");
 						JOptionPane.showMessageDialog(null,
-							"" + obj + " rows updated.", "Update Executed",
+							"" + obj + " records updated.", "Update Executed",
 							JOptionPane.INFORMATION_MESSAGE);
 					}
 				});
