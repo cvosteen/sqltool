@@ -80,7 +80,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		topPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 		topPanel.setLayout(gridbag);
 		c.fill = GridBagConstraints.BOTH;
-		c.insets = new Insets(4,4,4,4);
+		c.insets = new Insets(3,3,3,3);
 
 		// Query ComboBox
 		c.weighty = 0.0;
