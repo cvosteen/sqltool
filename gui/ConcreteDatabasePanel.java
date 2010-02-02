@@ -31,16 +31,16 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 	private Task queryTask;
 	private ActionListener runQueryActionListener = new ActionListener() {
-		public void run() {
+		public void actionPerformed(ActionEvent e) {
 			runQuery();
 		}
 	};
 
 	private ActionListener stopQueryActionListener = new ActionListener() {
-		public void run() {
+		public void actionPerformed(ActionEvent e) {
 			stopQuery();
 		}
-	}
+	};
 
 	public ConcreteDatabasePanel(DatabasePanelParent parent, Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
@@ -359,6 +359,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		runButton.setIcon(new ImageIcon(this.getClass().getResource("icons/run_icon.png")));
 		runButton.setText("Run Query");
 		runButton.setToolTipText("Run the current query.");
+		runButton.removeActionListener(stopQueryActionListener);
 		runButton.addActionListener(runQueryActionListener);
 	}
 
@@ -366,6 +367,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		runButton.setIcon(new ImageIcon(this.getClass().getResource("icons/stop_icon.png")));
 		runButton.setText("Stop Query");
 		runButton.setToolTipText("Cancel the current query.");
+		runButton.removeActionListener(runQueryActionListener);
 		runButton.addActionListener(stopQueryActionListener);
 	}
 
@@ -565,17 +567,19 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 		public void taskError(final Exception e) {
 			try {
-				SwingUtilities.invokeAndWait(new Runnable() {
-					public void run() {
-						// Only show errors if the task was not cancelled.
-						if(!queryTask.isCancelled()) {
+				// Only show errors if the task was not cancelled.
+				// Also, make sure this 'if' is OUTSIDE of the invokeAndWait
+				// otherwise we'll have a deadlock! =O
+				if(!queryTask.isCancelled()) {
+					SwingUtilities.invokeAndWait(new Runnable() {
+						public void run() {
 							queryStatusLabel.setText("Error");
 							JOptionPane.showMessageDialog(null,
 								e.getMessage(), "Error",
 								JOptionPane.ERROR_MESSAGE);
 						}
-					}
-				});
+					});
+				}
 			} catch(Exception f) { }
 		}
 	}
