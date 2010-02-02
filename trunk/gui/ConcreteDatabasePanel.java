@@ -29,6 +29,19 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	protected JButton saveButton;
 	protected JLabel queryStatusLabel;
 
+	private Task queryTask;
+	private ActionListener runQueryActionListener = new ActionListener() {
+		public void run() {
+			runQuery();
+		}
+	};
+
+	private ActionListener stopQueryActionListener = new ActionListener() {
+		public void run() {
+			stopQuery();
+		}
+	}
+
 	public ConcreteDatabasePanel(DatabasePanelParent parent, Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
 
@@ -145,11 +158,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		c.fill = GridBagConstraints.BOTH;
 		runButton = new JButton("Run Query", new ImageIcon(this.getClass().getResource("icons/run_icon.png")));
 		runButton.setToolTipText("Run the current query.");
-		runButton.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						runQuery();
-					}
-			});
+		runButton.addActionListener(runQueryActionListener);
 		gridbag.setConstraints(runButton, c);
 		topPanel.add(runButton);
 
@@ -277,7 +286,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
 				sqlField.setText(sql);
 				queryCombo.setSelectedItem(newQuery);
-				parent.saveRequested(this);
+				if(parent != null)
+					parent.saveRequested(this);
 				saveButton.setEnabled(false);
 		}
 	}
@@ -309,7 +319,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				// the edits he/she has made he/she must click the "Save Query" button.
 				if(!currentSql.equals(sqlField.getText()))
 					sqlField.setText(currentSql);
-				parent.saveRequested(this);
+				if(parent != null)
+					parent.saveRequested(this);
 		}
 	}
 
@@ -319,7 +330,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				       	delQuery + "?", "Delete Query", JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) ==	JOptionPane.YES_OPTION) {
 			database.deleteQuery(delQuery);
-			parent.saveRequested(this);
+			if(parent != null)
+				parent.saveRequested(this);
 			queryCombo.setModel(new DefaultComboBoxModel(database.getAllQueries().toArray()));
 			sqlField.setText(database.getQuerySql((String) queryCombo.getSelectedItem()));
 			saveButton.setEnabled(false);
@@ -327,11 +339,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	}
 
 	private void runQuery() {
-		runButton.setEnabled(false);
+		makeStopButton();
 		queryStatusLabel.setText("Working...");
 		table.setModel(new DefaultTableModel());
 		try {
-			Task queryTask = new QueryTask(connection, sqlField.getText());
+			queryTask = new QueryTask(connection, sqlField.getText());
 			queryTask.addTaskListener(new QueryTaskListener());
 			queryTask.start();
 		} catch(SQLException e) {
@@ -339,12 +351,31 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			JOptionPane.showMessageDialog(this,
 				e.getMessage(), "Error",
 				JOptionPane.ERROR_MESSAGE);
-			runButton.setEnabled(true);
+			makeRunButton();
 		}
 	}
 
+	public void makeRunButton() {
+		runButton.setIcon(new ImageIcon(this.getClass().getResource("icons/run_icon.png")));
+		runButton.setText("Run Query");
+		runButton.setToolTipText("Run the current query.");
+		runButton.addActionListener(runQueryActionListener);
+	}
+
+	public void makeStopButton() {
+		runButton.setIcon(new ImageIcon(this.getClass().getResource("icons/stop_icon.png")));
+		runButton.setText("Stop Query");
+		runButton.setToolTipText("Cancel the current query.");
+		runButton.addActionListener(stopQueryActionListener);
+	}
+
+	public void stopQuery() {
+		queryTask.cancel();
+	}
+
 	private void printTable() {
-		parent.printRequested(this);
+		if(parent != null)
+			parent.printRequested(this);
 	}
 
 	protected void adjustTableColumns(JTable theTable) {
@@ -391,7 +422,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			newQuery(sqlField.getText());
 		} else {
 			database.saveQuery(saveQuery, sqlField.getText());
-			parent.saveRequested(this);
+			if(parent != null)
+				parent.saveRequested(this);
 			saveButton.setEnabled(false);
 		}
 	}
@@ -482,7 +514,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
 						adjustTableColumns(table);
-						runButton.setEnabled(true);
+						makeRunButton();
 					}
 				});
 			} catch(Exception f) { }
@@ -535,10 +567,13 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
-						queryStatusLabel.setText("Error");
-						JOptionPane.showMessageDialog(null,
-							e.getMessage(), "Error",
-							JOptionPane.ERROR_MESSAGE);
+						// Only show errors if the task was not cancelled.
+						if(!queryTask.isCancelled()) {
+							queryStatusLabel.setText("Error");
+							JOptionPane.showMessageDialog(null,
+								e.getMessage(), "Error",
+								JOptionPane.ERROR_MESSAGE);
+						}
 					}
 				});
 			} catch(Exception f) { }
