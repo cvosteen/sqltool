@@ -16,7 +16,7 @@ cd ..
 javac SQLTool.java
 @if errorlevel 1 goto :eof
 
-jar cvfm SQLTool.jar manifest.mf *.class license.html database\*.class gui\*.class gui\components\*.class task\*.class tasks\*.class
+jar cvfm SQLTool.jar manifest.mf *.class license.html database\*.class gui\*.class gui\components\*.class gui\icons\* task\*.class tasks\*.class
 
 del *.class
 cd database
