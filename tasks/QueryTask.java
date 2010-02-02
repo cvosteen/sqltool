@@ -87,6 +87,15 @@ public class QueryTask extends Task {
 				Task t = new ResultSetTask((ResultSet) obj);
 				t.addTaskListener(new ResultSetTaskListener());
 				t.start();
+				
+				// While this is running the user may request cancellation.
+				while(!t.isFinished() && !t.isCancelled()) {
+					// Every 0.1 second, check for cancellation
+					sleep(100);
+					if(isCancelled()) {
+						t.cancel();
+					}
+				}
 			} else {
 				reportResult(obj);
 				reportFinished();
