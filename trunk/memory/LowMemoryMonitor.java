@@ -47,10 +47,22 @@ public class LowMemoryMonitor {
 		throw new AssertionError("Could not find memory pool!");
 	}
 
-	public void setMemoryPercentageThreshold(double percentage) {
+	/**
+	 * Sets the low memory notification based on the percentage of memory left.
+	 */
+	public void setMemoryThreshold(double percentage) {
 		MemoryPoolMXBean pool = getHeapMemoryPool();
 		long maxMemory = pool.getUsage().getMax();
-		pool.setUsageThreshold((long) (percentage * maxMemory));
+		pool.setUsageThreshold((long) ((1.0 - percentage) * maxMemory));
+	}
+
+	/**
+	 * Sets the low memory notification based on the amount of memory left.
+	 */
+	public void setMemoryThreshold(long size) {
+		MemoryPoolMXBean pool = getHeapMemoryPool();
+		long maxMemory = pool.getUsage().getMax();
+		pool.setUsageThreshold(maxMemory - size);
 	}
 
 	public void addListener(LowMemoryListener listener) {

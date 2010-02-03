@@ -1,6 +1,7 @@
 package gui;
 
 import database.*;
+import memory.*;
 import task.*;
 import tasks.*;
 import gui.components.*;
@@ -44,6 +45,17 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 
 	public ConcreteDatabasePanel(DatabasePanelParent parent, Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
+
+		LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
+		monitor.setMemoryThreshold(10000000L);
+		monitor.addListener(new LowMemoryListener() {
+			public void memoryLow() {
+				stopQuery();
+				JOptionPane.showMessageDialog(null,
+					"Not enough memory.  Query aborted.", "Error",
+					JOptionPane.ERROR_MESSAGE);
+			}
+		});
 
 		// This one CAN be null
 		this.parent = parent;
@@ -372,7 +384,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	}
 
 	public void stopQuery() {
-		queryTask.cancel();
+		if(queryTask != null) {
+			queryTask.cancel();
+			queryTask = null;
+		}
 	}
 
 	private void printTable() {
@@ -543,7 +558,12 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 										model.addRow((Vector) row);
 									}
 								}
-								queryStatusLabel.setText("" + rowsReceived + " records");
+
+								if(rowsReceived == 1) {
+									queryStatusLabel.setText("1 record");
+								} else {
+									queryStatusLabel.setText("" + rowsReceived + " records");
+								}
 							}
 						}
 
