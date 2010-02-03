@@ -24,7 +24,7 @@ public abstract class Task extends Thread {
 	 * called while iterating through the list.  This could happen if called by
 	 * a TaskListener.
 	 */
-	public synchronized void addTaskListener(TaskListener listener) {
+	public void addTaskListener(TaskListener listener) {
 		ArrayList<TaskListener> newListeners = new ArrayList<TaskListener>(listeners);
 		newListeners.add(listener);
 		listeners = newListeners;
@@ -36,7 +36,7 @@ public abstract class Task extends Thread {
 	 * called while iterating through the list.  This could happen if called by
 	 * a TaskListener.
 	 */
-	public synchronized void removeTaskListener(TaskListener listener) {
+	public void removeTaskListener(TaskListener listener) {
 		ArrayList<TaskListener> newListeners = new ArrayList<TaskListener>(listeners);
 		newListeners.remove(listener);
 		listeners = newListeners;
@@ -46,7 +46,7 @@ public abstract class Task extends Thread {
 	 * Alerts all observers that this task is finished.
 	 * Should be called by subclasses when the task is finished.
 	 */
-	protected synchronized void reportFinished() {
+	protected void reportFinished() {
 		finished = true;
 		for(TaskListener listener : listeners)
 			listener.taskFinished();
@@ -58,7 +58,7 @@ public abstract class Task extends Thread {
 	 * Any objects passed should be copies and/or immutable so that the
 	 * same object is not modified by multiple threads.
 	 */
-	protected synchronized void reportStatus(Object obj) {
+	protected void reportStatus(Object obj) {
 		status = obj;
 		for(TaskListener listener : listeners)
 			listener.taskStatus(obj);
@@ -68,7 +68,7 @@ public abstract class Task extends Thread {
 	 * Alerts all observers of the result of this task.
 	 * Should be called to return the result from this task, if any.
 	 */
-	protected synchronized void reportResult(Object obj) {
+	protected void reportResult(Object obj) {
 		result = obj;
 		for(TaskListener listener : listeners)
 			listener.taskResult(obj);
@@ -79,7 +79,7 @@ public abstract class Task extends Thread {
 	 * Should be called instead of throwing an exception,
 	 * which goes nowhere because this is a separate thread.
 	 */
-	protected synchronized void reportError(Exception e) {
+	protected void reportError(Exception e) {
 		error = e;
 		for(TaskListener listener : listeners)
 			listener.taskError(e);
@@ -88,49 +88,49 @@ public abstract class Task extends Thread {
 	/**
 	 * Returns wether or not the task has reported that it is finished.
 	 */
-	public synchronized boolean isFinished() {
+	public boolean isFinished() {
 		return finished;
 	}
 
 	/**
 	 * Returns the last reported status from this task.
 	 */
-	public synchronized Object getStatus() {
+	public Object getStatus() {
 		return status;
 	}
 
 	/**
 	 * Returns wether or not there is a result to report.
 	 */
-	public synchronized boolean hasResult() {
+	public boolean hasResult() {
 		return result != null;
 	}
 
 	/**
 	 * Returns the task's reported result.
 	 */
-	public synchronized Object getResult() {
+	public Object getResult() {
 		return result;
 	}
 
 	/**
 	 * Returns wether or not there is a error to report.
 	 */
-	public synchronized boolean hasError() {
+	public boolean hasError() {
 		return error != null;
 	}
 
 	/**
 	 * Returns the task's reported error.
 	 */
-	public synchronized Exception getError() {
+	public Exception getError() {
 		return error;
 	}
 
 	/**
 	 * Requests that the current task be cancelled.
 	 */
-	public synchronized void cancel() {
+	public void cancel() {
 		cancelled = true;
 	}
 
@@ -138,7 +138,7 @@ public abstract class Task extends Thread {
 	 * Returns wether or not this task has been cancelled.
 	 * Subclasses should periodically check this.
 	 */
-	public synchronized boolean isCancelled() {
+	public boolean isCancelled() {
 		return cancelled;
 	}
 
