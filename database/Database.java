@@ -17,7 +17,6 @@ public class Database implements Serializable, Comparable<Database> {
 	private String driver;
 	private String connectionUrl;
 	private Map<String, String> queries;
-	private Connection connection = null;
 
 	public Database(String name, String driver, String connectionUrl) {
 		setName(name);
@@ -92,7 +91,7 @@ public class Database implements Serializable, Comparable<Database> {
 			ClassNotFoundException f = new ClassNotFoundException("Invalid database driver class.", e);
 			throw(f);
 		}
-		connection = DriverManager.getConnection(connectionUrl);
+		Connection connection = DriverManager.getConnection(connectionUrl);
 
 		// TODO: Make this user configurable?
 		connection.setAutoCommit(false);

@@ -55,6 +55,9 @@ public class ResultSetTask extends Task {
 		} catch(final SQLException e) {
 			reportError(e);
 		} finally {
+			try {
+				resultSet.close();
+			} catch (SQLException e) { }
 			reportFinished();
 		}
 	}

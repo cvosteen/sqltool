@@ -1,5 +1,6 @@
 import database.*;
 import gui.*;
+import memory.*;
 import java.io.*;
 import javax.swing.*;
 import java.util.*;
@@ -17,6 +18,10 @@ public class SQLTool {
 		} catch (Exception e) {}
 		JFrame.setDefaultLookAndFeelDecorated(true);
 
+		// Set memory monitor
+		LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
+		monitor.setMemoryThreshold(0.2);
+		
 		// Create the application
 		DatabaseManager databaseManager = new DatabaseManager(DATA_FILE);
 

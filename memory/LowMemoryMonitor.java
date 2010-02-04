@@ -65,6 +65,14 @@ public class LowMemoryMonitor {
 		pool.setUsageThreshold(maxMemory - size);
 	}
 
+	/**
+	 * Returns wether or not the memory threshold has been exceeded.
+	 */
+	public boolean isMemoryLow() {
+		MemoryPoolMXBean pool = getHeapMemoryPool();
+		return pool.isUsageThresholdExceeded();
+	}
+
 	public void addListener(LowMemoryListener listener) {
 		listeners.add(listener);
 	}
