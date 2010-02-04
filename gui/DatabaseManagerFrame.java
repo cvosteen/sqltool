@@ -150,6 +150,15 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	 * adds it to the Tabbed Pane.
 	 */
 	private void connect() {
+		System.gc();
+		LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
+		if(monitor.isMemoryLow()) {
+			JOptionPane.showMessageDialog(this,
+				"Not enough memory to connect.", "Error",
+				JOptionPane.ERROR_MESSAGE);
+			return;
+
+		}
 		ResponseGetter<Database> dialog = new DatabaseManagerDialog(this, databaseManager);
 		Database database = dialog.getResponse();
 		if(database != null) {
@@ -228,6 +237,15 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	 * retrieved from that DatabasePanel and printed.
 	 */
 	public void printRequested(DatabasePanel databasePanel) {
+		System.gc();
+		LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
+		if(monitor.isMemoryLow()) {
+			JOptionPane.showMessageDialog(this,
+				"Not enough memory to print.", "Error",
+				JOptionPane.ERROR_MESSAGE);
+			return;
+
+		}
 		PrinterJob job = PrinterJob.getPrinterJob();
 		Printable p = databasePanel.getPrintableComponent();
 		job.setPrintable(p, pageFormat);

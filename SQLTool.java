@@ -20,7 +20,7 @@ public class SQLTool {
 
 		// Set memory monitor
 		LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
-		monitor.setMemoryThreshold(0.2);
+		monitor.setMemoryThreshold(10000000);
 		
 		// Create the application
 		DatabaseManager databaseManager = new DatabaseManager(DATA_FILE);

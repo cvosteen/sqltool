@@ -494,6 +494,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			table.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).remove(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK));
 			table.getActionMap().remove("doPrint");
 			KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+			// I don't know why, but if the table model is reset
+			// BEFORE the connection is closed, the data in the
+			// table can be GCed.  But the other way around and
+			// it is stuck! D:
 			table.setModel(new DefaultTableModel());
 			connection.close();
 			LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
