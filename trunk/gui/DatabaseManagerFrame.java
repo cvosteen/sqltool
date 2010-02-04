@@ -5,6 +5,7 @@
 package gui;
 
 import database.*;
+import memory.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;

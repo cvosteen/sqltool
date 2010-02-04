@@ -40,22 +40,26 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	private ActionListener stopQueryActionListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 			stopQuery();
+			runButton.setEnabled(false);
 		}
+	};
+
+	private LowMemoryListener lowMemoryListener = new LowMemoryListener() {
+			public void memoryLow() {
+				if(queryTask != null) {
+					stopQuery();
+					JOptionPane.showMessageDialog(null,
+						"Not enough memory.  Query aborted.", "Error",
+						JOptionPane.ERROR_MESSAGE);
+				}
+			}
 	};
 
 	public ConcreteDatabasePanel(DatabasePanelParent parent, Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
 
 		LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
-		monitor.setMemoryThreshold(10000000L);
-		monitor.addListener(new LowMemoryListener() {
-			public void memoryLow() {
-				stopQuery();
-				JOptionPane.showMessageDialog(null,
-					"Not enough memory.  Query aborted.", "Error",
-					JOptionPane.ERROR_MESSAGE);
-			}
-		});
+		monitor.addListener(lowMemoryListener);
 
 		// This one CAN be null
 		this.parent = parent;
@@ -386,7 +390,6 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	public void stopQuery() {
 		if(queryTask != null) {
 			queryTask.cancel();
-			queryTask = null;
 		}
 	}
 
@@ -488,7 +491,13 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	public void shutdown() {
 		// TODO: Ask to save any unsaved changed to text field!
 		try {
+			table.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).remove(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK));
+			table.getActionMap().remove("doPrint");
+			KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+			table.setModel(new DefaultTableModel());
 			connection.close();
+			LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
+			monitor.removeListener(lowMemoryListener);
 		} catch(Exception f) {
 			// Ignore all exceptions
 			// Nothing much we can do here anyway
@@ -527,11 +536,13 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		private int rowsReceived = 0;
 
 		public void taskFinished() {
+			queryTask = null;
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
 						adjustTableColumns(table);
 						makeRunButton();
+						runButton.setEnabled(true);
 					}
 				});
 			} catch(Exception f) { }
@@ -590,7 +601,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 				// Only show errors if the task was not cancelled.
 				// Also, make sure this 'if' is OUTSIDE of the invokeAndWait
 				// otherwise we'll have a deadlock! =O
-				if(!queryTask.isCancelled()) {
+				if(queryTask != null && !queryTask.isCancelled()) {
 					SwingUtilities.invokeAndWait(new Runnable() {
 						public void run() {
 							queryStatusLabel.setText("Error");

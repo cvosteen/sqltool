@@ -50,6 +50,7 @@ public class QueryTask extends Task {
 			// Only if there is an error above are we finished here.
 			// Otherwise we wait for a result or error from the subtask
 			reportError(e);
+			closeStatement();
 			reportFinished();
 		}
 	}
@@ -101,6 +102,7 @@ public class QueryTask extends Task {
 				}
 			} else {
 				reportResult(obj);
+				closeStatement();
 				reportFinished();
 			}
 
@@ -113,6 +115,7 @@ public class QueryTask extends Task {
 		 */
 		public void taskError(Exception e) {
 			reportError(e);
+			closeStatement();
 			reportFinished();
 		}
 	}
@@ -135,6 +138,7 @@ public class QueryTask extends Task {
 		 * This means the QueryTask is definitely finished.
 		 */
 		public void taskFinished() {
+			closeStatement();
 			reportFinished();
 		}
 
@@ -154,6 +158,12 @@ public class QueryTask extends Task {
 		public void taskStatus(Object obj) {
 			reportStatus(obj);
 		}
+	}
+
+	private void closeStatement() {
+		try {
+			preparedStatement.close();
+		} catch(SQLException e) { }
 	}
 }
 
