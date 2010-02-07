@@ -1,6 +1,8 @@
-import database.*;
-import gui.*;
-import memory.*;
+package cvosteen.sqltool;
+
+import cvosteen.sqltool.database.*;
+import cvosteen.sqltool.gui.*;
+import cvosteen.sqltool.memory.*;
 import java.io.*;
 import javax.swing.*;
 import java.util.*;

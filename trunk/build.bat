@@ -1,5 +1,6 @@
 del SQLTool.jar
 
+cd cvosteen\sqltool
 del *.class
 cd database
 del *.class
@@ -15,13 +16,14 @@ cd ..\..\task
 del *.class
 cd ..\tasks
 del *.class
-cd ..
+cd ..\..\..
 
-javac SQLTool.java
+javac cvosteen\sqltool\SQLTool.java
 @if errorlevel 1 goto :eof
 
-jar cvfm SQLTool.jar manifest.mf *.class license.html database\*.class memory\*.class gui\*.class gui\components\*.class gui\syntax\*.class gui\icons\* task\*.class tasks\*.class
+jar cvfm SQLTool.jar manifest.mf cvosteen\sqltool\*.class cvosteen\sqltool\license.html cvosteen\sqltool\database\*.class cvosteen\sqltool\memory\*.class cvosteen\sqltool\gui\*.class cvosteen\sqltool\gui\components\*.class cvosteen\sqltool\gui\syntax\*.class cvosteen\sqltool\gui\icons\* cvosteen\sqltool\task\*.class cvosteen\sqltool\tasks\*.class
 
+cd cvosteen\sqltool
 del *.class
 cd database
 del *.class
@@ -37,5 +39,5 @@ cd ..\..\task
 del *.class
 cd ..\tasks
 del *.class
-cd ..
+cd ..\..\..
 
