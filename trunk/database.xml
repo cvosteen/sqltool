@@ -4,6 +4,11 @@
 <driver>sun.jdbc.odbc.JdbcOdbcDriver</driver>
 <url>jdbc:odbc:Driver={Microsoft Access Driver (*.mdb)};DBQ=C:\Users\Christian\Desktop\QrySampl.mdb;</url>
 <query name="Customer List">SELECT * FROM Customers</query>
+<query name="Customer Spending">SELECT Customers.CustomerID, CompanyName, SUM(UnitPrice * Quantity) AS Spending
+FROM (Customers INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID)
+  INNER JOIN [Order Details] ON Orders.OrderID = [Order Details].OrderID
+GROUP BY Customers.CustomerID, CompanyName
+ORDER BY SUM(UnitPrice * Quantity) DESC</query>
 <query name="Memory Filler">SELECT * FROM Customers, Products, Employees</query>
 </database>
 </databases>

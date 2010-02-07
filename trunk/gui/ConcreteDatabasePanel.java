@@ -5,6 +5,7 @@ import memory.*;
 import task.*;
 import tasks.*;
 import gui.components.*;
+import gui.syntax.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -23,7 +24,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	private Connection connection;
 	private JTree tree;
 	private JComboBox queryCombo;
-	private JTextArea sqlField;
+	private JTextPane sqlField;
 	protected JTable table;
 	private JPopupMenu popup;
 	protected JButton runButton;
@@ -195,7 +196,13 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		c.gridwidth = 5;
 		c.gridheight = 2;
 		c.fill = GridBagConstraints.BOTH;
-		sqlField = new JTextArea(6, 1);
+		SyntaxHighlightedDocument doc = new SyntaxHighlightedDocument();
+		doc.setFontFamily("Courier New");
+		doc.setFontSize(12);
+		doc.setSyntax(new SqlSyntax());
+		doc.setColorScheme(new StandardColorScheme());
+		sqlField = new JTextPane(doc);
+		sqlField.setPreferredSize(new Dimension(100, 100));
 		sqlField.setText(database.getQuerySql((String) queryCombo.getSelectedItem()));
 		sqlField.getDocument().addDocumentListener(new DocumentListener() {
 					public void changedUpdate(DocumentEvent e) {
