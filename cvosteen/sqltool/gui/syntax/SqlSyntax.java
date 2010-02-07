@@ -6,89 +6,273 @@ import java.util.regex.Pattern;
 
 public class SqlSyntax implements Syntax {
 	private Map<Pattern, String> syntax = new LinkedHashMap<Pattern, String>();
+	private String[] statements = new String[] {
+		"alter",
+		"analyze",
+		"attach",
+		"backup",
+		"begin",
+		"break",
+		"cascade",
+		"catch",
+		"commit",
+		"compute",
+		"create",
+		"declare",
+		"delete",
+		"deny",
+		"detach",
+		"drop",
+		"explain",
+		"execute",
+		"fail",
+		"fetch",
+		"finally",
+		"go",
+		"goto",
+		"grant",
+		"insert",
+		"kill",
+		"merge",
+		"open",
+		"output",
+		"print",
+		"procedure",
+		"raise",
+		"receive",
+		"release",
+		"reindex",
+		"replace",
+		"restore",
+		"revert",
+		"revoke",
+		"rollback",
+		"select",
+		"set",
+		"shutdown",
+		"try",
+		"update",
+		"waitfor",
+	};
+
+	private String[] keywords = new String[] {
+		"abort",
+		"action",
+		"after",
+		"as",
+		"asc",
+		"autoincrement",
+		"before",
+		"by",
+		"ceiling",
+		"check",
+		"collate",
+		"column",
+		"conflict",
+		"constraint",
+		"cross",
+		"cursor",
+		"database",
+		"default",
+		"deferrable",
+		"deferred",
+		"desc",
+		"end",
+		"escape",
+		"exclusive",
+		"floor",
+		"for",
+		"foreign",
+		"from",
+		"full",
+		"group",
+		"grouping",
+		"having",
+		"on",
+		"identity",
+		"ignore",
+		"immediate",
+		"index",
+		"indexed",
+		"initially",
+		"inner",
+		"instead",
+		"into",
+		"join",
+		"key",
+		"left",
+		"limit",
+		"match",
+		"natural",
+		"no",
+		"null",
+		"of",
+		"offset",
+		"on",
+		"option",
+		"order",
+		"outer",
+		"over",
+		"plan",
+		"pragma",
+		"primary",
+		"query",
+		"rank",
+		"references",
+		"regexp",
+		"rename",
+		"restrict",
+		"right",
+		"row",
+		"savepoint",
+		"soundex",
+		"table",
+		"temp",
+		"temporary",
+		"to",
+		"top",
+		"transaction",
+		"trigger",
+		"use",
+		"using",
+		"vacuum",
+		"values",
+		"view",
+		"virtual",
+		"where",
+		"while"
+	};
+
+	private String[] operators = new String[] {
+		"add",
+		"all",
+		"and",
+		"any",
+		"between",
+		"case",
+		"cast",
+		"close",
+		"contains",
+		"distinct",
+		"each",
+		"else",
+		"except",
+		"exists",
+		"when",
+		"if",
+		"in",
+		"intersect",
+		"is",
+		"isdate",
+		"isnull",
+		"isnumeric",
+		"like",
+		"minus",
+		"not",
+		"notnull",
+		"or",
+		"some",
+		"then",
+		"union",
+		"unique",
+		"when"
+	};
+
+	private String[] functions = new String[] {
+		"abs",
+		"average",
+		"avg",
+		"changes",
+		"charindex",
+		"coalesce",
+		"convert",
+		"count",
+		"current_date",
+		"current_time",
+		"current_timestamp",
+		"day",
+		"format",
+		"getdate",
+		"ifnull",
+		"iif",
+		"hex",
+		"len",
+		"length",
+		"lower",
+		"ltrim",
+		"max",
+		"mid",
+		"min",
+		"month",
+		"now",
+		"nullif",
+		"quote",
+		"random",
+		"replace",
+		"reverse",
+		"round",
+		"rtrim",
+		"str",
+		"substring",
+		"sum",
+		"total",
+		"trim",
+		"upper",
+		"val",
+		"year"
+	};
+
+	private String[] types = new String[] {
+		"bigint",
+		"binary",
+		"bit",
+		"blob",
+		"boolean",
+		"char",
+		"character",
+		"clob",
+		"date",
+		"datetime",
+		"decimal",
+		"double",
+		"float",
+		"glob",
+		"int",
+		"int2",
+		"int8",
+		"integer",
+		"long",
+		"mediumint",
+		"money",
+		"nchar",
+		"numeric",
+		"nvarchar",
+		"real",
+		"smalldate",
+		"smallint",
+		"text",
+		"time",
+		"timestamp",
+		"tinyint",
+		"unsigned",
+		"varchar"
+	};
 
 	public SqlSyntax() {
-		addKeyword("select", "statement");
-		addKeyword("insert", "statement");
-		addKeyword("update", "statement");
-		addKeyword("delete", "statement");
-		addKeyword("alter", "statement");
-		addKeyword("create", "statement");
-		addKeyword("drop", "statement");
-		addKeyword("declare", "statement");
-		addKeyword("transaction", "statement");
-		addKeyword("table", "statement");
-		addKeyword("procedure", "statement");
-		addKeyword("view", "statement");
-		addKeyword("commit", "statement");
-		addKeyword("rollback", "statement");
-		addKeyword("execute", "statement");
+		for(String statement : statements)
+			addKeyword(statement, "statement");
 
-		addKeyword("top", "keyword");
-		addKeyword("from", "keyword");
-		addKeyword("on", "keyword");
-		addKeyword("where", "keyword");
-		addKeyword("group", "keyword");
-		addKeyword("by", "keyword");
-		addKeyword("having", "keyword");
-		addKeyword("order", "keyword");
-		addKeyword("asc", "keyword");
-		addKeyword("desc", "keyword");
-		addKeyword("as", "keyword");
-		addKeyword("case", "keyword");
-		addKeyword("when", "keyword");
-		addKeyword("then", "keyword");
-		addKeyword("else", "keyword");
-		addKeyword("end", "keyword");
-		addKeyword("inner", "keyword");
-		addKeyword("outer", "keyword");
-		addKeyword("cross", "keyword");
-		addKeyword("right", "keyword");
-		addKeyword("left", "keyword");
-		addKeyword("join", "keyword");
+		for(String keyword : keywords)
+			addKeyword(keyword, "keyword");
 
-		addKeyword("sum", "function");
-		addKeyword("count", "function");
-		addKeyword("average", "function");
-		addKeyword("max", "function");
-		addKeyword("min", "function");
-		addKeyword("iif", "function");
-		addKeyword("now", "function");
-		addKeyword("getdate", "function");
-		addKeyword("convert", "function");
-		addKeyword("format", "function");
+		for(String operator : operators)
+			addKeyword(operator, "operator");
 
-		addKeyword("in", "operator");
-		addKeyword("or", "operator");
-		addKeyword("and", "operator");
-		addKeyword("between", "operator");
-		addKeyword("like", "operator");
-		addKeyword("union", "operator");
-		addKeyword("intersect", "operator");
-		addKeyword("any", "operator");
-		addKeyword("some", "operator");
-		addKeyword("all", "operator");
-		addKeyword("minus", "operator");
-		addKeyword("distinct", "operator");
+		for(String function : functions)
+			addKeyword(function, "function");
 
-		addKeyword("integer", "type");
-		addKeyword("smallint", "type");
-		addKeyword("int", "type");
-		addKeyword("char", "type");
-		addKeyword("long", "type");
-		addKeyword("varchar", "type");
-		addKeyword("float", "type");
-		addKeyword("double", "type");
-		addKeyword("numeric", "type");
-		addKeyword("real", "type");
-		addKeyword("bit", "type");
-		addKeyword("boolean", "type");
-		addKeyword("money", "type");
-		addKeyword("date", "type");
-		addKeyword("datetime", "type");
-		addKeyword("smalldate", "type");
-		addKeyword("time", "type");
-		addKeyword("timestamp", "type");
+		for(String type: types)
+			addKeyword(type, "type");
 
 		syntax.put(Pattern.compile("@\\w+\\b"), "variable");
 		syntax.put(Pattern.compile("^@\\w+\\b"), "variable");

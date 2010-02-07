@@ -198,7 +198,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		c.fill = GridBagConstraints.BOTH;
 		SyntaxHighlightedDocument doc = new SyntaxHighlightedDocument();
 		doc.setFontFamily("Courier New");
-		doc.setFontSize(12);
+		doc.setFontSize(13);
 		doc.setSyntax(new SqlSyntax());
 		doc.setColorScheme(new StandardColorScheme());
 		sqlField = new JTextPane(doc);
