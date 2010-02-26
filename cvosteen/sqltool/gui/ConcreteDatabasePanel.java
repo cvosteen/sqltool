@@ -203,7 +203,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		doc.setColorScheme(new StandardColorScheme());
 		sqlField = new JTextPane(doc);
 		sqlField.setPreferredSize(new Dimension(100, 100));
-		sqlField.setText(database.getQuerySql((String) queryCombo.getSelectedItem()));
+		// There is a small delay when the font is set because the font
+		// must be loaded.  Load the font now, when loading the DatabasePanel,
+		// otherwise it will be loaded lazily after the first keystroke,
+		// causing an annoying delay.
+		sqlField.setFont(new Font("Courier", Font.PLAIN, 13));
 		sqlField.getDocument().addDocumentListener(new DocumentListener() {
 					public void changedUpdate(DocumentEvent e) {
 						saveButton.setEnabled(true);
