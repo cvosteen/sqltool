@@ -1,3 +1,12 @@
+/**
+ * The implementation of the DatabasePanel Interface.
+ * The implemenation takes a Database object.
+ * It provides a table and column list on the left via a JTreeView.
+ * On the top is a query editor (JTextArea) and pull-down menu of
+ * saved queries.  The bottom panel shows the results of any SELECT
+ * queries.
+ */
+
 package cvosteen.sqltool.gui;
 
 import cvosteen.sqltool.database.*;
@@ -32,6 +41,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	protected JLabel queryStatusLabel;
 
 	private Task queryTask;
+
+	// Create one listener each for running and stopping the query.
+	// That way new Actionlisteners do not have to be created each time,
+	// they simply need to be swapped out.
 	private ActionListener runQueryActionListener = new ActionListener() {
 		public void actionPerformed(ActionEvent e) {
 			runQuery();
@@ -45,6 +58,8 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	};
 
+	// Low memory listener in case a really large memory-hog query uses all
+	// memory, it will be cancelled.
 	private LowMemoryListener lowMemoryListener = new LowMemoryListener() {
 			public void memoryLow() {
 				if(queryTask != null) {
@@ -56,6 +71,9 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			}
 	};
 
+	/**
+	 * Creates the instance with the specified database and parent.
+	 */
 	public ConcreteDatabasePanel(DatabasePanelParent parent, Database database) throws SQLException, ClassNotFoundException {
 		super(HORIZONTAL_SPLIT);
 
@@ -298,6 +316,12 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		setRightComponent(panel);
 	}
 
+	/**
+	 * Called when the "New Query" button is pressed, or when the
+	 * "Save Query" button is pressed for a brand new query.
+	 * This method will prompt the user to name the query and
+	 * then save it to the database object.
+	 */
 	private void newQuery(String sql) {
 		boolean okay = true;
 		String newQuery = JOptionPane.showInputDialog(this,
@@ -319,6 +343,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Called when the "Rename Query" button is pressed.
+	 * This method will prompt the user to enter a new name for the specified query.
+	 */
 	private void renameQuery() {
 		boolean okay = true;
 		String oldQuery = (String) queryCombo.getSelectedItem();
@@ -351,6 +379,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Called when the "Delete Query" button is pressed.
+	 * The user will be asked if they are sure first, then the query will be removed
+	 * from the database object.
+	 */
 	private void deleteQuery() {
 		String delQuery = (String) queryCombo.getSelectedItem();
 		if(delQuery != null && JOptionPane.showConfirmDialog(this, "Are you sure you want to delete " +
@@ -365,6 +398,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Called when the "Run Query" button is pressed.
+	 * This will start the QueryTask for the current query and
+	 * reset the results table.
+	 */
 	private void runQuery() {
 		makeStopButton();
 		queryStatusLabel.setText("Working...");
@@ -382,6 +420,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Change the "Stop Button" into a "Run Button".
+	 * Presumably after a query completes or the Stop Button is pressed.
+	 */
 	public void makeRunButton() {
 		runButton.setIcon(new ImageIcon(this.getClass().getResource("icons/run_icon.png")));
 		runButton.setText("Run Query");
@@ -390,6 +432,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		runButton.addActionListener(runQueryActionListener);
 	}
 
+	/**
+	 * Change the "Run Button" into a "Stop Button".
+	 * Presumably after the Run Button is pressed.
+	 */
 	public void makeStopButton() {
 		runButton.setIcon(new ImageIcon(this.getClass().getResource("icons/stop_icon.png")));
 		runButton.setText("Stop Query");
@@ -398,17 +444,32 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		runButton.addActionListener(stopQueryActionListener);
 	}
 
+	/**
+	 * Called when either the stop button is pressed or memory is low.
+	 * This will request that the running query task cancel.
+	 */
 	public void stopQuery() {
 		if(queryTask != null) {
 			queryTask.cancel();
 		}
 	}
 
+	/**
+	 * Called when either Ctrl+P or "Print..." from the context menu are executed.
+	 * This will inform the parent that a print has been requested by the user.
+	 */
 	private void printTable() {
 		if(parent != null)
 			parent.printRequested(this);
 	}
 
+	/**
+	 * Manually adjust the columns in the JTable.
+	 * Since the JTable is set NOT to auto-adjust. This method should be called
+	 * at the end of a query to make all of the columns fit nicely.  The size
+	 * of the strings in each column will be used to determine the correct
+	 * width of each column.
+	 */
 	protected void adjustTableColumns(JTable theTable) {
 		TableModel model = theTable.getModel();
 		TableCellRenderer headerRenderer =
@@ -446,6 +507,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Called when the "Save Query" button is pressed.
+	 * This will save the changes to an existing query, and prompt
+	 * for a query name (via newQuery())if it is a new query.
+	 */
 	private void saveQuery() {
 		String saveQuery = (String) queryCombo.getSelectedItem();
 		if(saveQuery == null) {
@@ -459,6 +525,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Called by the JTreeView listener when the user expands the "Database"
+	 * section.  This method will lookup a list of tables from the database
+	 * and use that to populate the JTreeView.
+	 */
 	private void expandDatabaseTree(DefaultMutableTreeNode dbNode) {
 		try {
 			dbNode.removeAllChildren();
@@ -475,6 +546,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Called by the JTreeView listener when the user expands the "Table"
+	 * section.  This method will lookup a list of columns from the specified
+	 * table from the database and use that to populate the JTreeView.
+	 */
 	private void expandTableTree(DefaultMutableTreeNode tableNode) {
 		try {
 			tableNode.removeAllChildren();
@@ -491,6 +567,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	}
 
 
+	/**
+	 * Implementing the DatabasePanel interface.
+	 * Provides the JTable wrapped in a JTablePrintable
+	 */
 	public Printable getPrintableComponent() {
 		JTablePrintable jtp = new JTablePrintable(table);
 		String title = database.getName() + " - " + (String) queryCombo.getSelectedItem();
@@ -499,6 +579,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		return jtp;
 	}
 
+	/**
+	 * Implementing the DatabasePanel interface.
+	 * Perform shutdown and release any potential global references.
+	 */
 	public void shutdown() {
 		// TODO: Ask to save any unsaved changed to text field!
 		try {
@@ -519,6 +603,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Implementing the DatabasePanel interface.
+	 * Tell the database to commit, display errors, if any, to the user.
+	 */
 	public void commit() {
 		try {
 			connection.commit();
@@ -533,6 +621,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * Implementing the DatabasePanel interface.
+	 * Tell the database to rollback, display errors, if any, to the user.
+	 */
 	public void rollback() {
 		try {
 			connection.rollback();
@@ -547,9 +639,18 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 		}
 	}
 
+	/**
+	 * A task listener designed to listen to a running QueryTask.
+	 * It will correctly update the UI depending on the status
+	 * of the QueryTask.
+	 */
 	private class QueryTaskListener implements TaskListener {
 		private int rowsReceived = 0;
 
+		/**
+		 * When the task has finished, the table will be adjusted
+		 * and the "Stop Button" will return to a "Run Button"
+		 */
 		public void taskFinished() {
 			queryTask = null;
 			try {
@@ -563,11 +664,16 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			} catch(Exception f) { }
 		}
 
+		/**
+		 * If the task reports status, results are being returned.
+		 * The table should be updated to reflect the data.
+		 */
 		public void taskStatus(final Object obj) {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					public void run() {
 						DefaultTableModel model = (DefaultTableModel) table.getModel();
+						// Make sure this object is a non-empty Vector
 						if(obj instanceof Vector && ((Vector) obj).size() > 0) {
 							Vector vector = (Vector) obj;
 							if(vector.get(0) instanceof String) {
@@ -598,6 +704,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			} catch(Exception f) { }
 		}
 
+		/**
+		 * If the task has returned a result, that means an
+		 * update was performed, and the user will be alerted.
+		 */
 		public void taskResult(final Object obj) {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
@@ -611,6 +721,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			} catch(Exception f) { }
 		}
 
+		/**
+		 * If the task reports an error, the error should be reported
+		 * to the user.
+		 */
 		public void taskError(final Exception e) {
 			try {
 				// Only show errors if the task was not cancelled.

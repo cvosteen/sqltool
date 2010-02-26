@@ -1,3 +1,8 @@
+/**
+ * An interface which should provide all
+ * of the syntax keywords and their types.
+ */
+
 package cvosteen.sqltool.gui.syntax;
 
 import java.util.Map;

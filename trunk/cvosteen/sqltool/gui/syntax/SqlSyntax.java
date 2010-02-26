@@ -1,3 +1,8 @@
+/**
+ * Implements the Syntax interface with
+ * common SQL keywords.
+ */
+
 package cvosteen.sqltool.gui.syntax;
 
 import java.util.Map;
@@ -286,7 +291,8 @@ public class SqlSyntax implements Syntax {
 		syntax.put(Pattern.compile("\"(\\\\\"|[^\"])*\""), "string");
 
 		// FIXME:
-		// Overlapping comment groups can cause a problem
+		// Overlapping comment groups can cause a problem.
+		// However, this should work well for most cases.
 		syntax.put(Pattern.compile("--.*$"), "comment");
 		syntax.put(Pattern.compile("(?s)/\\*.*?\\*/"), "comment");
 	}

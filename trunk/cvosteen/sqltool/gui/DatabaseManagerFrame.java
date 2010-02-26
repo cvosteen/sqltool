@@ -47,6 +47,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 
 		// Set up our menu bar
 		JMenuBar menuBar = new JMenuBar();
+		// File Menu
 		JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
 		JMenuItem printItem = new JMenuItem("Print...");
@@ -75,6 +76,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 				}
 			});
 		fileMenu.add(exitItem);
+		// Database Menu
 		JMenu databaseMenu = new JMenu("Database");
 		menuBar.add(databaseMenu);
 		JMenuItem connectItem = new JMenuItem("Connect...");
@@ -91,6 +93,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 				}
 			});
 		databaseMenu.add(disconnectItem);
+		// Transaction Menu
 		JMenu transactionMenu = new JMenu("Transaction");
 		menuBar.add(transactionMenu);
 		JMenuItem commitItem = new JMenuItem("Commit");
@@ -107,6 +110,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 				}
 			});
 		transactionMenu.add(rollbackItem);
+		// Help Menu
 		JMenu helpMenu = new JMenu("Help");
 		menuBar.add(helpMenu);
 		JMenuItem aboutItem = new JMenuItem("About");
