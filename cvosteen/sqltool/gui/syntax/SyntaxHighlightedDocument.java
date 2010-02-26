@@ -1,3 +1,11 @@
+/**
+ * A subclass of DefaultStyledDocument which takes a
+ * Syntax and a ColorScheme and automatically handles
+ * syntax highlighting.  If no Syntax or ColorScheme
+ * are specified, this document acts like a Plain Text
+ * Document.
+ */
+
 package cvosteen.sqltool.gui.syntax;
 
 import java.awt.Font;
@@ -48,16 +56,28 @@ public class SyntaxHighlightedDocument extends DefaultStyledDocument {
 		return StyleConstants.getFontSize(baseAttributeSet);
 	}
 
+	/**
+	 * This method is called by DefaultStyledDocument when text is inserted.
+	 * Since regexes are very flexible, the entire document must be re-examined.
+	 */
 	public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
 		super.insertString(offs, str, a);
 		rehighlight();
 	}
 
+	/**
+	 * This method is called by DefaultStyledDocument when text is removed.
+	 * Since regexes are very flexible, the entire document must be re-examined.
+	 */
 	public void remove(int offs, int len) throws BadLocationException {
 		super.remove(offs, len);
 		rehighlight();
 	}
 
+	/**
+	 * Applies the regexes supplied by the Syntax to the text of this document.
+	 * The ColorScheme is applied to each keyword etc.
+	 */
 	private void rehighlight() throws BadLocationException {
 		// Clear all styles
 		setCharacterAttributes(0, getLength(), baseAttributeSet, true);

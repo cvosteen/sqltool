@@ -1,3 +1,8 @@
+/**
+ * Implements a basic color scheme for use with
+ * the SQLSyntax syntax object.
+ */
+
 package cvosteen.sqltool.gui.syntax;
 
 import java.awt.Color;
