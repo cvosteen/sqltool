@@ -573,7 +573,14 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	 */
 	public Printable getPrintableComponent() {
 		JTablePrintable jtp = new JTablePrintable(table);
-		String title = database.getName() + " - " + (String) queryCombo.getSelectedItem();
+		String dbName = database.getName();
+		String queryName = (String) queryCombo.getSelectedItem();
+		String title;
+		if(queryName == null) {
+			title = database.getName() + " - (Ad-hoc SQL)";
+		} else {
+			title = database.getName() + " - " + (String) queryCombo.getSelectedItem();
+		}
 		if(title != null)
 			jtp.setTitle(title);
 		return jtp;
