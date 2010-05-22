@@ -96,7 +96,7 @@ public class SyntaxHighlightedDocument extends DefaultStyledDocument {
 					// Apply attributes to each match of the Regex
 					Matcher matcher = pattern.matcher(text);
 					while(matcher.find()) {
-						setCharacterAttributes(matcher.start(), matcher.end() - matcher.start(), as, false);
+						setCharacterAttributes(matcher.start(), matcher.end() - matcher.start(), as, true);
 					}
 				}
 			}
