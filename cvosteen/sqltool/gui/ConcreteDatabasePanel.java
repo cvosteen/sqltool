@@ -601,7 +601,10 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 			// table can be GCed.  But the other way around and
 			// it is stuck! D:
 			table.setModel(new DefaultTableModel());
-			connection.close();
+			// Let the close operation run in the background, it's possible
+			// for it to take a long time.
+			CloseConnectionTask cct = new CloseConnectionTask(connection);
+			cct.start();
 			LowMemoryMonitor monitor = LowMemoryMonitor.getInstance();
 			monitor.removeListener(lowMemoryListener);
 		} catch(Exception f) {
