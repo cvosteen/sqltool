@@ -96,7 +96,10 @@ public class DatabaseXMLEncoder {
 		for(int i = 0; i < nl.getLength(); i++) {
 			Element e = (Element) nl.item(i);
 			String qname = e.getAttribute("name");
-			String qsql = e.getFirstChild().getNodeValue();
+			Node node = e.getFirstChild();
+			String qsql = "";
+			if(node != null)
+				qsql = e.getFirstChild().getNodeValue();
 			d.saveQuery(qname, qsql);
 		}
 		return d;
