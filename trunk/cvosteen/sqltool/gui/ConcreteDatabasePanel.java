@@ -35,6 +35,7 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	private JComboBox queryCombo;
 	private JTextPane sqlField;
 	protected JTable table;
+	protected String executedQueryName = "";
 	private JPopupMenu popup;
 	protected JButton runButton;
 	protected JButton saveButton;
@@ -406,7 +407,11 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	private void runQuery() {
 		makeStopButton();
 		queryStatusLabel.setText("Working...");
-		table.setModel(new DefaultTableModel());
+		// Store the name of this executed query
+		executedQueryName = (String) queryCombo.getSelectedItem();
+		if(executedQueryName == null)
+			executedQueryName = "";
+		table.setModel(new NonEditableTableModel());
 		try {
 			queryTask = new QueryTask(connection, sqlField.getText());
 			queryTask.addTaskListener(new QueryTaskListener());
@@ -574,12 +579,14 @@ public class ConcreteDatabasePanel extends JSplitPane implements DatabasePanel {
 	public Printable getPrintableComponent() {
 		JTablePrintable jtp = new JTablePrintable(table);
 		String dbName = database.getName();
-		String queryName = (String) queryCombo.getSelectedItem();
+		// Use the executed query name, the name in the combobox
+		// may not necessarily be accurate
+		String queryName = executedQueryName;
 		String title;
-		if(queryName == null) {
-			title = database.getName() + " - (Ad-hoc SQL)";
+		if(queryName == null || queryName.length() == 0) {
+			title = dbName + " - (Ad-hoc SQL)";
 		} else {
-			title = database.getName() + " - " + (String) queryCombo.getSelectedItem();
+			title = dbName + " - " + queryName;
 		}
 		if(title != null)
 			jtp.setTitle(title);

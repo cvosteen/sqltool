@@ -16,7 +16,6 @@ import javax.swing.table.*;
 
 public class JTablePrintable implements Printable {
 
-	JTable table;
 	ArrayList<TextEntity> entities = null;
 	String title = "";
 	TextEntity titleEntity = null;
@@ -29,9 +28,19 @@ public class JTablePrintable implements Printable {
 	final int yPadding = 0;
 	final int xPadding = 3;
 
+	// ****** NEW CODE HERE?!?!?
+	private int numColumns;
+	private int numRows;
+	private java.util.List<String> columns;
+	private java.util.List<java.util.List<String>> data;
+
 	
 	public JTablePrintable(JTable table) {
-		this.table = table;
+		// Make a shallow copy of all of the data in this JTable
+		// right here!  If we do it later, the data could be GC'ed by
+		// the time the print is actually performed,
+		// especially if the user jumps to another query in the GUI.
+		extractFromJTable(table);
 	}
 
 	/**
@@ -48,6 +57,8 @@ public class JTablePrintable implements Printable {
 	 * the size of the page etc. until print time.
 	 */
 	public int print(Graphics g, PageFormat pf, int page) throws PrinterException {
+		// TODO: Implement some sort of page fitting/zooming
+
 		// Translate so it fits within the imageable area
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.translate(pf.getImageableX(), pf.getImageableY());
@@ -70,7 +81,6 @@ public class JTablePrintable implements Printable {
 		// page request.  After that use the already calculated data.
 		if(entities == null) {
 			entities = new ArrayList<TextEntity>();
-			TableModel model = table.getModel();
 		
 			// Generate the title entity
 			g.setFont(boldFont);
@@ -91,8 +101,8 @@ public class JTablePrintable implements Printable {
 			// The vertical page number is also easly calculated
 			int currentX = tableRect.x;
 			int pageX = 0;
-			for(int col = 0; col < model.getColumnCount(); col++) {
-				int colWidth = getColumnWidth(model, g, col);
+			for(int col = 0; col < numColumns; col++) {
+				int colWidth = getColumnWidth(g, col);
 				colWidth += (2 * xPadding);
 
 				// Advance pageX if needed
@@ -102,13 +112,10 @@ public class JTablePrintable implements Printable {
 				}
 
 				// Now create the column's entities
-				String thisString = model.getColumnName(col);
+				String thisString = columns.get(col);
 				entities.add(new TextEntity(thisString, true, true, currentX, tableRect.y, colWidth, lineheight, pageX, 0));
-				for(int row = 0; row < model.getRowCount(); row++) {
-					Object value = model.getValueAt(row, col);
-					if(value == null)
-						value = "";
-					thisString = value.toString();
+				for(int row = 0; row < numRows; row++) {
+					thisString = data.get(row).get(col);
 					int pageY = (row + 1) / rowsPerPage; // Add 1 for the headers
 					int y = ((row + 1) - (pageY * rowsPerPage)) * lineheight + tableRect.y;
 					entities.add(new TextEntity(thisString, false, true, currentX, y, colWidth, lineheight, pageX, pageY));
@@ -116,7 +123,7 @@ public class JTablePrintable implements Printable {
 				currentX += colWidth;
 			}
 			maxPageX = pageX;
-			maxPageY = (model.getRowCount() + 1) / rowsPerPage;
+			maxPageY = (numRows + 1) / rowsPerPage;
 
 			// Generate the Page x of y footers
 			g.setFont(plainFont);
@@ -154,23 +161,51 @@ public class JTablePrintable implements Printable {
 		return PAGE_EXISTS;
 	}
 
+
+	/**
+	 * Extracts data from a JTable as a 2D String Array
+	 * and saves the data as well as the dimensions in this
+	 * instance's private variables.
+	 */
+	private void extractFromJTable(JTable table) {
+		TableModel model = table.getModel();
+
+		numColumns = model.getColumnCount();
+		numRows = model.getRowCount();
+		columns = new ArrayList<String>();
+		data = new ArrayList<java.util.List<String>>();
+
+		for(int col = 0; col < numColumns; col++) {
+			columns.add(model.getColumnName(col));
+		}
+
+		for(int row = 0; row < numRows; row++) {
+			java.util.List<String> dataRow = new ArrayList<String>();
+			for(int col = 0; col < numColumns; col++) {
+				Object value = model.getValueAt(row, col);
+				if(value == null)
+					value = "";
+				dataRow.add(value.toString());
+			}
+			data.add(dataRow);
+		}
+	}
+	
+	
 	/**
 	 * Calculates how wide a column needs to be to fit all of the
 	 * data for that column.
 	 */
-	private int getColumnWidth(TableModel model, Graphics g, int column) {
+	private int getColumnWidth(Graphics g, int column) {
 		int maxWidth = 0;
 		// First get the column heading width
-		String thisString = model.getColumnName(column);
+		String thisString = columns.get(column);
 		int thisWidth = g.getFontMetrics(boldFont).stringWidth(thisString);
 		maxWidth = thisWidth;
 
 		// Go row by row measuring each item's width
-		for(int row = 0; row < model.getRowCount(); row++) {
-			Object value = model.getValueAt(row, column);
-			if(value == null)
-				value = "";
-			thisString = value.toString();
+		for(int row = 0; row < numRows; row++) {
+			thisString = data.get(row).get(column);
 			thisWidth = g.getFontMetrics(plainFont).stringWidth(thisString);
 			if(thisWidth > maxWidth)
 				maxWidth = thisWidth;
