@@ -5,6 +5,7 @@
 package cvosteen.sqltool.gui;
 
 import cvosteen.sqltool.database.*;
+import cvosteen.sqltool.gui.components.*;
 import cvosteen.sqltool.memory.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -21,6 +22,7 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	private DatabaseManager databaseManager;
 	private JTabbedPane tabbedPane;
 	private PageFormat pageFormat = new PageFormat();
+	private PageSetup pageSetup = new PageSetup();
 
 	public DatabaseManagerFrame(DatabaseManager databaseManager, String name, String version) {
 		super(name + " v" + version);
@@ -61,10 +63,18 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 				}
 			});
 		fileMenu.add(printItem);
+		fileMenu.addSeparator();
+		JMenuItem printSetupItem = new JMenuItem("Print Setup...");
+		printSetupItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					doPrintSetup();
+				}
+			});
+		fileMenu.add(printSetupItem);
 		JMenuItem pageSetupItem = new JMenuItem("Page Setup...");
 		pageSetupItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					pageSetup();
+					doPageSetup();
 				}
 			});
 		fileMenu.add(pageSetupItem);
@@ -140,9 +150,18 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 	}
 
 	/**
+	 * Allow the user to modify the current PageSetup.
+	 */
+	private void doPageSetup() {
+		PageSetupDialog dialog = new PageSetupDialog(this, pageSetup);
+		pageSetup = dialog.getResponse();
+		dialog.dispose();
+	}
+
+	/**
 	 * Allow the user to modify the current PageFormat.
 	 */
-	private void pageSetup() {
+	private void doPrintSetup() {
 		PrinterJob job = PrinterJob.getPrinterJob();
 		pageFormat = job.pageDialog(pageFormat);
 	}
@@ -251,7 +270,8 @@ public class DatabaseManagerFrame extends JFrame implements DatabasePanelParent 
 
 		}
 		PrinterJob job = PrinterJob.getPrinterJob();
-		Printable p = databasePanel.getPrintableComponent();
+		JTablePrintable p = (JTablePrintable) databasePanel.getPrintableComponent();
+		p.setPageSetup(pageSetup);
 		job.setPrintable(p, pageFormat);
 		job.setJobName(name);
 		boolean ok = job.printDialog();

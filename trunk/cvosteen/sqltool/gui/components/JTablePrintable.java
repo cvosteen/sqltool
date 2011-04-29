@@ -7,6 +7,7 @@
 
 package cvosteen.sqltool.gui.components;
 
+import cvosteen.sqltool.gui.*;
 import java.awt.*;
 import java.awt.print.*;
 import java.text.*;
@@ -30,11 +31,12 @@ public class JTablePrintable implements Printable {
 	private Font boldFont = new Font("Arial", Font.BOLD, 10);
 
 	// Zooming and Fitting options
-	private double zoom = 1.0;
-	private boolean fitWidth = false;
-	private int fitWidthPages = 0;
-	private boolean fitHeight = false;
-	private int fitHeightPages = 0;
+	private PageSetup pageSetup = new PageSetup();
+	// private double zoom = 1.0;
+	// private boolean fitWidth = false;
+	// private int fitWidthPages = 0;
+	// private boolean fitHeight = false;
+	// private int fitHeightPages = 0;
 	private final double zoomReadjust = 0.95;
 
 	
@@ -46,42 +48,16 @@ public class JTablePrintable implements Printable {
 		extractFromJTable(table);
 	}
 
+	public void setPageSetup(PageSetup pageSetup) {
+		this.pageSetup = pageSetup;
+	}
+
 	/**
 	 * Sets a title to be printed at the top of each page
 	 * in the margins.
 	 */
 	public void setTitle(String title) {
 		this.title = title;
-	}
-
-	/**
-	 * Explicitly set the zoom for printing this table
-	 * The default is 100%
-	 */
-	public void setZoom(double zoom) {
-		this.zoom = zoom;
-		fitWidth = false;
-		fitHeight = false;
-	}
-
-	/**
-	 * Sets the number of pages that the table must
-	 * fit into width-wise
-	 */
-	public void setFitWidth(int pages) {
-		this.zoom = 1.0;
-		fitWidth = true;
-		fitWidthPages = pages;
-	}
-
-	/**
-	 * Sets the number of pages that the table must
-	 * fit into height-wise
-	 */
-	public void setFitHeight(int pages) {
-		this.zoom = 1.0;
-		fitHeight = true;
-		fitHeightPages = pages;
 	}
 
 	/**
@@ -109,18 +85,19 @@ public class JTablePrintable implements Printable {
 			// The area within the page that the table will take up
 			// leaving room for headers and footers
 			Rectangle tableRect = new Rectangle(0, 2 * lineHeight, (int) pf.getImageableWidth(), (int) pf.getImageableHeight() - (4 * lineHeight));
-			System.out.println("Print Area: " + tableRect.x + ", " + tableRect.y + ", " + tableRect.width + ", " + tableRect.height);
 
 			// Set these parameters so the table can make needed calculations
 			table.setPageArea(tableRect);
 			table.setGraphics(g);
 
 			// Set the zoom of the table
+			double zoom = pageSetup.getZoom();
 			table.setZoom(zoom);
 
 			// Do we have page restrictions?
-			if(fitWidth)
+			if(pageSetup.isFitWidth())
 			{
+				int fitWidthPages = pageSetup.getFitWidthPages();
 				boolean fits = table.getPagesWide() <= fitWidthPages;
 				while(!fits)
 				{
@@ -129,8 +106,9 @@ public class JTablePrintable implements Printable {
 					fits = table.getPagesWide() <= fitWidthPages;
 				}
 			}
-			if(fitHeight)
+			if(pageSetup.isFitHeight())
 			{
+				int fitHeightPages = pageSetup.getFitHeightPages();
 				boolean fits = table.getPagesHigh() <= fitHeightPages;
 				while(!fits)
 				{
@@ -328,7 +306,6 @@ public class JTablePrintable implements Printable {
 			columnWidths = new int[columns.size()];
 			for(int c = 0; c < numColumns; c++) {
 				columnWidths[c] = getColumnWidth(graphics, c) + (2 * xPadding);
-				System.out.println("Column width " + c + ": " + columnWidths[c]);
 			}
 			rowHeight = graphics.getFontMetrics().getHeight() + (2 * yPadding);
 		}
@@ -475,7 +452,6 @@ public class JTablePrintable implements Printable {
 			int colEnd = getFirstColumnOnPageX(pageX + 1);
 			int rowStart = getFirstRowOnPageY(pageY);
 			int rowEnd = getFirstRowOnPageY(pageY + 1);
-			System.out.println("page " + page + ": row " + rowStart + " to " + rowEnd + ", col " + colStart + " to " + colEnd);
 
 			// Scale fonts down (or up) to zoom
 			Font scaledBold = new Font(defaultFontFamily, Font.BOLD, (int)(defaultFontSize * zoom));
