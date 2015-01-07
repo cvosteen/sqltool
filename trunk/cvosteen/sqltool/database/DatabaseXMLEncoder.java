@@ -76,6 +76,8 @@ public class DatabaseXMLEncoder {
 	 * <database name="Name">
 	 *   <driver>foo.bar.DriverName</driver>
 	 *   <url>foo:bar:connection_string</url>
+	 *   <property name="user">foo</property>
+	 *   <property name="password">hunter2</property>
 	 *   <query name="Query One">SELECT * FROM Foo</query>
 	 *   <query name="Query Two">SELECT * FROM Bar</query>
 	 *   ...
@@ -92,7 +94,20 @@ public class DatabaseXMLEncoder {
 		else
 			d = new Database(name, cls, conn);
 
-		NodeList nl = elem.getElementsByTagName("query");
+		Properties properties = new Properties();
+		NodeList nl = elem.getElementsByTagName("property");
+		for(int i = 0; i < nl.getLength(); i++) {
+			Element e = (Element) nl.item(i);
+			String key = e.getAttribute("name");
+			Node node = e.getFirstChild();
+			String value = "";
+			if(node != null)
+				value = e.getFirstChild().getNodeValue();
+			properties.setProperty(key, value);
+		}
+		d.setProperties(properties);
+
+		nl = elem.getElementsByTagName("query");
 		for(int i = 0; i < nl.getLength(); i++) {
 			Element e = (Element) nl.item(i);
 			String qname = e.getAttribute("name");
@@ -158,6 +173,12 @@ public class DatabaseXMLEncoder {
 				e.setAttribute("name", db.getName());
 				setTextChild(e, "driver", db.getDriver());
 				setTextChild(e, "url", db.getConnectionUrl());
+
+				Properties properties = db.getProperties();
+				for(String key : properties.stringPropertyNames()) {
+					setTextChild(e, "property", properties.getProperty(key));
+					((Element) e.getLastChild()).setAttribute("name", key);
+				}
 
 				for(String query : db.getAllQueries()) {
 					setTextChild(e, "query", db.getQuerySql(query));

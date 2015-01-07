@@ -16,12 +16,14 @@ public class Database implements Serializable, Comparable<Database> {
 	private String name;
 	private String driver;
 	private String connectionUrl;
+	private Properties properties;
 	private Map<String, String> queries;
 
 	public Database(String name, String driver, String connectionUrl) {
 		setName(name);
 		setDriver(driver);
 		setConnectionUrl(connectionUrl);
+		properties = new Properties();
 		queries = new Hashtable<String, String>();
 	}
 
@@ -53,6 +55,17 @@ public class Database implements Serializable, Comparable<Database> {
 		if(connectionUrl == null)
 			throw new NullPointerException("You must specify a connection URL!");
 		this.connectionUrl = connectionUrl;
+	}
+
+	/**
+	 * Sets properties associated with the connection url
+	 */
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
+
+	public Properties getProperties() {
+		return properties;
 	}
 	
 	/**
@@ -91,7 +104,14 @@ public class Database implements Serializable, Comparable<Database> {
 			ClassNotFoundException f = new ClassNotFoundException("Invalid database driver class.", e);
 			throw(f);
 		}
-		Connection connection = DriverManager.getConnection(connectionUrl);
+
+		Connection connection;
+		if(properties.propertyNames().hasMoreElements()) 
+			/* There are properties */
+			connection = DriverManager.getConnection(connectionUrl, properties);
+		else
+			/* There are no properties */
+			connection = DriverManager.getConnection(connectionUrl);
 
 		// TODO: Make this user configurable?
 		connection.setAutoCommit(false);
