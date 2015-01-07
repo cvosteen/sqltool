@@ -6,6 +6,7 @@
 package cvosteen.sqltool.gui;
 
 import cvosteen.sqltool.database.*;
+import cvosteen.sqltool.gui.components.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -20,6 +21,7 @@ public class DatabaseDialog extends JDialog implements ResponseGetter<Database> 
 	private final JTextField nameField = new JTextField(20);
 	private final JTextField driverField = new JTextField(20);
 	private final JTextField urlField = new JTextField(20);
+	private final PropertiesEditor propEditor = new PropertiesEditor();
 
 	/**
 	 * Creates a DatabaseDialog that will return a new
@@ -49,6 +51,7 @@ public class DatabaseDialog extends JDialog implements ResponseGetter<Database> 
 		nameField.setText(database.getName());
 		driverField.setText(database.getDriver());
 		urlField.setText(database.getConnectionUrl());
+		propEditor.setProperties(database.getProperties());
 		setVisible(true);
 	}
 
@@ -107,9 +110,26 @@ public class DatabaseDialog extends JDialog implements ResponseGetter<Database> 
 		gridbag.setConstraints(urlField, c);
 		panel.add(urlField);
 
-		// Save and Cancel buttons on bottom right
+		// Properties Table
+		c.weightx = 0.0;
+		c.gridwidth = 1;
+		label = new JLabel("Connection Properties:");
+		gridbag.setConstraints(label, c);
+		panel.add(label);
 		c.weightx = 1.0;
 		c.weighty = 1.0;
+		c.gridy = 3;
+		c.gridx = 1;
+		c.gridwidth = 2;
+		c.gridheight = 2;
+		gridbag.setConstraints(propEditor, c);
+		panel.add(propEditor);
+		propEditor.setPreferredSize(new Dimension(100, 100));
+
+		// Save and Cancel buttons on bottom right
+		c.weightx = 1.0;
+		c.weighty = 0.0;
+		c.gridy = 5;
 		c.gridx = 1;
 		c.gridwidth = 1;
 		c.fill = GridBagConstraints.NONE;
@@ -160,6 +180,7 @@ public class DatabaseDialog extends JDialog implements ResponseGetter<Database> 
 	private void saveDatabase() {
 		try {
 			database = new Database(nameField.getText(), driverField.getText(), urlField.getText());
+			database.setProperties(propEditor.getProperties());
 			setVisible(false);
 		} catch(NullPointerException f) {
 			// Databases throw NullPointerException if any of the fields are nulls (e.g. User Error)

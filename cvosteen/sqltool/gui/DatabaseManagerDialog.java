@@ -181,6 +181,7 @@ public class DatabaseManagerDialog extends JDialog implements ResponseGetter<Dat
 				selection.setName(newDatabase.getName());
 				selection.setDriver(newDatabase.getDriver());
 				selection.setConnectionUrl(newDatabase.getConnectionUrl());
+				selection.setProperties(newDatabase.getProperties());
 				try {
 					databaseManager.save();
 				} catch(IOException e) {

@@ -3,6 +3,7 @@
 <database name="Query Sample">
 <driver>sun.jdbc.odbc.JdbcOdbcDriver</driver>
 <url>jdbc:odbc:Driver={Microsoft Access Driver (*.mdb)};DBQ=C:\Users\chris\Desktop\QrySampl.mdb;</url>
+<property name="foo">bar</property>
 <query name="Customer List">SELECT * FROM Customers</query>
 <query name="Customer Spending">SELECT Customers.CustomerID, CompanyName, SUM(UnitPrice * Quantity) AS Spending
 FROM (Customers INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID)
