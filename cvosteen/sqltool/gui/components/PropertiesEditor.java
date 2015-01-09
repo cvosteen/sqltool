@@ -56,7 +56,7 @@ public class PropertiesEditor extends JPanel {
 		table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
 		// Set the Table's Context Menu
-		JPopupMenu popup = new JPopupMenu();
+		final JPopupMenu popup = new JPopupMenu();
 		JMenuItem delMenuItem = new JMenuItem("Delete...");
 		delMenuItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
